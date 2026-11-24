@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { money } from '#shared/orders'
 import { fundingLabels } from '#shared/config'
-import { acceptPrice, changeCart, lineIssue } from '#shared/demo/cart'
+import { acceptPrice, cartQuantityLimit, changeCart, lineIssue } from '#shared/demo/cart'
 import type { CartLine } from '#shared/types'
-const { change } = useFms()
+const { model, change } = useFms()
 const { rows, total, issue } = useCart()
-function update(line: CartLine, quantity: number) {
+function update(line: CartLine, quantity: number | undefined) {
+  if (quantity === undefined || quantity === line.quantity) return
   change(
     (draft) => changeCart(draft, line.itemId, line.option, quantity),
     quantity ? 'Quantity updated' : 'Item removed',
@@ -20,13 +21,13 @@ function update(line: CartLine, quantity: number) {
         <h1>My cart</h1>
         <p class="lede">Review your selections before checkout.</p>
       </div>
-      <NuxtLink class="btn secondary" to="/catalog">Continue browsing</NuxtLink>
+      <UButton color="neutral" variant="outline" to="/catalog">Continue browsing</UButton>
     </div>
     <div v-if="rows.length" class="detail-grid">
       <section class="panel">
         <div class="panel-head">
           <h2>Cart items</h2>
-          <span class="meta-chip">{{ rows.length }} lines</span>
+          <UBadge color="neutral" variant="subtle">{{ rows.length }} lines</UBadge>
         </div>
         <article v-for="{ line, item } in rows" :key="line.itemId + line.option" class="cart-row">
           <span class="icon-box" :class="item?.color">
@@ -39,27 +40,27 @@ function update(line: CartLine, quantity: number) {
             <p v-if="lineIssue(item, line)" class="error-text" role="alert">
               {{ lineIssue(item, line) }}
             </p>
-            <button
+            <UButton
               v-if="item && line.quotedPrice !== item.price"
-              class="text-link"
+              variant="link"
               @click="change((draft) => acceptPrice(draft, line), 'Current price accepted')"
             >
               Accept {{ money(item.price) }}
-            </button>
+            </UButton>
             <div class="cart-row-actions">
               <QuantityInput
-                :value="line.quantity"
-                :max="Math.min(item?.limit ?? 1, item?.stock ?? Infinity)"
+                :model-value="line.quantity"
+                :max="item ? cartQuantityLimit(model, item, line.option) : 0"
                 :label="(item?.title || '') + ' quantity'"
-                @change="update(line, $event)"
+                @update:model-value="update(line, $event)"
               />
-              <button
-                class="icon-button"
-                :aria-label="'Remove ' + item?.title"
+              <UButton
+                color="neutral"
+                variant="ghost"
+                icon="i-lucide-trash-2"
+                :aria-label="'Remove ' + (item?.title ?? line.itemId)"
                 @click="update(line, 0)"
-              >
-                <Glyph name="trash-2" />
-              </button>
+              />
             </div>
           </div>
           <div class="amount">
@@ -68,7 +69,7 @@ function update(line: CartLine, quantity: number) {
           </div>
         </article>
       </section>
-      <aside class="panel form-card sticky-card">
+      <UCard as="aside" class="sticky-card">
         <h2>Order summary</h2>
         <div class="summary-row">
           <span>Subtotal</span>
@@ -82,12 +83,12 @@ function update(line: CartLine, quantity: number) {
           <span>Total</span>
           <strong>{{ money(total) }}</strong>
         </div>
-        <p v-if="issue" class="notice warning" role="alert">{{ issue }}</p>
-        <button class="btn primary wide" :disabled="!!issue" @click="navigateTo('/checkout')">
+        <UAlert v-if="issue" color="warning" variant="soft" :description="issue" role="alert" />
+        <UButton block :disabled="!!issue" @click="navigateTo('/checkout')">
           Proceed to checkout
-        </button>
+        </UButton>
         <p class="fineprint">Available capacity is checked again when the order is placed.</p>
-      </aside>
+      </UCard>
     </div>
     <div v-else class="panel">
       <EmptyState
@@ -95,7 +96,7 @@ function update(line: CartLine, quantity: number) {
         title="Your cart is empty"
         text="Choose a product or service from the catalog to get started."
       >
-        <NuxtLink to="/catalog" class="btn primary">Browse catalog</NuxtLink>
+        <UButton to="/catalog">Browse catalog</UButton>
       </EmptyState>
     </div>
   </div>

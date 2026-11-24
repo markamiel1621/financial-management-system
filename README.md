@@ -66,9 +66,10 @@ Set `NUXT_PUBLIC_APP_NAME` in `.env` to change the displayed name and browser ti
 | Illustrative offerings, prices in integer centavos, options, capacity and funding | `shared/demo/catalog.ts` |
 | Starting orders, activity and status examples | `shared/demo/seed.ts` |
 | Cart checks, checkout snapshots, order decisions, finance and fulfillment gates | `shared/demo/cart.ts` and `shared/demo/workflow.ts` |
+| Form fields, Zod rules and currency conversion | `shared/validation.ts` |
 | Employee and staff navigation | `shared/navigation.ts` |
 | Browser session, fixture loading and local edits | `app/plugins/demo.client.ts` and `app/composables/useFms.ts` |
-| Screen layouts and design tokens | `app/pages/`, `app/components/`, `app/assets/css/` |
+| Screen layouts and Nuxt UI styling | `app/pages/`, `app/components/`, `app/app.config.ts`, `app/assets/css/` |
 | PostgreSQL development schema and migration configuration | `server/db/schema.ts` and `drizzle.config.ts` |
 
 Nuxt 4, Nuxt UI 4, TypeScript, and Tailwind CSS 4 power the interface. Nitro supplies `GET /api/demo.json` from the same fixtures embedded in the presentation. Zod validates checkout, corrections, references, and catalog edits. Use a single tab for a presentation. After changing seed data, rebuild the offline file and use **Reset demo** to load the new sample values.

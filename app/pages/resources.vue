@@ -123,53 +123,48 @@ watch(mode, () => {
         </div>
         <span class="icon-box purple"><Glyph name="workflow" /></span>
       </div>
-      <div class="segmented" aria-label="Funding path">
-        <button
-          v-for="option in options"
-          :key="option.value"
-          :aria-pressed="mode === option.value"
-          :class="{ active: mode === option.value }"
-          @click="mode = option.value"
-        >
-          {{ option.label }}
-        </button>
-      </div>
-      <div class="flow-heading">
-        <div>
-          <span class="eyebrow">{{ fundingLabels[mode] }}</span>
-          <h3>{{ example.item }}</h3>
-        </div>
-        <NuxtLink v-if="role === 'employee'" :to="'/catalog/' + example.id" class="text-link">
-          Open offering
-        </NuxtLink>
-      </div>
-      <ol class="flow-map">
-        <li v-for="(node, index) in nodes" :key="node.title">
-          <button
-            :class="['flow-node', { active: selected === index }]"
-            :aria-pressed="selected === index"
-            @click="selected = index"
-          >
-            <span class="flow-top">
-              <span class="icon-box" :class="node.color"><Glyph :name="node.icon" /></span>
-              <span class="step-no">Step {{ index + 1 }}</span>
+      <UTabs v-model="mode" :items="options" class="guide-tabs" aria-label="Funding path">
+        <template #content>
+          <div class="flow-heading">
+            <div>
+              <span class="eyebrow">{{ fundingLabels[mode] }}</span>
+              <h3>{{ example.item }}</h3>
+            </div>
+            <UButton v-if="role === 'employee'" :to="'/catalog/' + example.id" variant="link">
+              Open offering
+            </UButton>
+          </div>
+          <ol class="flow-map">
+            <li v-for="(node, index) in nodes" :key="node.title">
+              <UButton
+                color="neutral"
+                variant="outline"
+                :class="['flow-node', { active: selected === index }]"
+                :aria-pressed="selected === index"
+                @click="selected = index"
+              >
+                <span class="flow-top">
+                  <span class="icon-box" :class="node.color"><Glyph :name="node.icon" /></span>
+                  <span class="step-no">Step {{ index + 1 }}</span>
+                </span>
+                <strong>{{ node.title }}</strong>
+                <small>{{ node.actor }}</small>
+              </UButton>
+            </li>
+          </ol>
+          <div v-if="nodes[selected]" class="flow-detail" aria-live="polite">
+            <span class="icon-box" :class="nodes[selected]!.color">
+              <Glyph :name="nodes[selected]!.icon" />
             </span>
-            <strong>{{ node.title }}</strong>
-            <small>{{ node.actor }}</small>
-          </button>
-        </li>
-      </ol>
-      <div v-if="nodes[selected]" class="flow-detail" aria-live="polite">
-        <span class="icon-box" :class="nodes[selected]!.color">
-          <Glyph :name="nodes[selected]!.icon" />
-        </span>
-        <div>
-          <h3>{{ nodes[selected]!.title }}</h3>
-          <p>{{ nodes[selected]!.detail }}</p>
-        </div>
-      </div>
+            <div>
+              <h3>{{ nodes[selected]!.title }}</h3>
+              <p>{{ nodes[selected]!.detail }}</p>
+            </div>
+          </div>
+        </template>
+      </UTabs>
     </section>
-    <section class="panel form-card">
+    <UCard as="section">
       <h2>When an order needs attention</h2>
       <div class="policy-grid">
         <div>
@@ -191,6 +186,6 @@ watch(mode, () => {
           </p>
         </div>
       </div>
-    </section>
+    </UCard>
   </div>
 </template>

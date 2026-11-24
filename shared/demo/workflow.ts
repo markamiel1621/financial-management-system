@@ -1,4 +1,3 @@
-import { z } from 'zod'
 import { personas } from '../config'
 import {
   approvedForWork,
@@ -10,13 +9,12 @@ import {
   verifiedTotal,
 } from '../orders'
 import type { DemoState, Order, Role } from '../types'
-import { purposeSchema } from './cart'
-
-const remark = z
-  .string()
-  .trim()
-  .min(3, 'Enter a reason or reference of at least three characters.')
-  .max(500)
+import {
+  handoverQuantitySchema,
+  paymentAmountSchema,
+  purposeSchema,
+  remarkSchema,
+} from '../validation'
 function assigned(state: DemoState, order: Order, allowed: Role[]) {
   const role = state.role
   if (!role || !allowed.includes(role) || !inScope(order, role))
@@ -57,7 +55,7 @@ export function reviewOrder(
   }
   if (order.status !== 'Under review' || decision === 'start')
     throw new Error('Start review before recording a decision.')
-  const note = decision === 'approve' ? 'Approved for processing.' : remark.parse(reason)
+  const note = decision === 'approve' ? 'Approved for processing.' : remarkSchema.parse(reason)
   if (
     decision === 'approve' &&
     order.lines.some(
@@ -91,7 +89,7 @@ export function cancelOrder(state: DemoState, order: Order, reason: string, now:
   assigned(state, order, ['employee'])
   if (!canCancel(order))
     throw new Error('Contact staff about cancelling an order with finance or fulfillment activity.')
-  const note = remark.parse(reason)
+  const note = remarkSchema.parse(reason)
   release(state, order)
   order.status = 'Cancelled'
   record(state, order, 'Order cancelled', note, now)
@@ -106,12 +104,11 @@ export function recordPayment(
   const actor = assigned(state, order, ['employee', 'finance'])
   if (order.funding !== 'employee' || !approvedForWork(order))
     throw new Error('This order cannot receive an employee payment.')
-  const ref = remark.parse(reference).toUpperCase()
+  const ref = remarkSchema.parse(reference).toUpperCase()
   if (state.orders.some((row) => row.payments.some((entry) => entry.reference === ref)))
     throw new Error('This payment reference is already recorded.')
   const recorded = order.payments.reduce((sum, entry) => sum + entry.amount, 0)
-  if (!Number.isInteger(amount) || amount <= 0 || amount > orderTotal(order) - recorded)
-    throw new Error('Enter an amount within the unrecorded balance.')
+  paymentAmountSchema(orderTotal(order) - recorded).parse(amount)
   order.payments.push({
     reference: ref,
     amount,
@@ -142,7 +139,7 @@ export function verifyAllocation(state: DemoState, order: Order, reference: stri
   const actor = assigned(state, order, ['finance'])
   if (order.funding !== 'internal' || order.allocation || !approvedForWork(order))
     throw new Error('This allocation cannot be verified.')
-  order.allocation = { reference: remark.parse(reference), verifiedBy: actor.name }
+  order.allocation = { reference: remarkSchema.parse(reference), verifiedBy: actor.name }
   record(
     state,
     order,
@@ -165,12 +162,11 @@ export function fulfillLine(
     throw new Error('Approval and financial clearance are required before fulfillment.')
   const line = order.lines[index]
   if (!line || line.status === 'Fulfilled') throw new Error('Choose an open line.')
-  const note = remark.parse(evidence)
+  const note = remarkSchema.parse(evidence)
   if (action === 'start' && line.status === 'Not started') line.status = 'In progress'
   else if (action === 'ready' && line.status === 'In progress') line.status = 'Ready'
   else if (action === 'handover' && line.status === 'Ready') {
-    if (!Number.isInteger(quantity) || quantity <= 0 || quantity > line.quantity - line.fulfilled)
-      throw new Error('Enter a quantity within the remaining units.')
+    handoverQuantitySchema(line.quantity - line.fulfilled).parse(quantity)
     line.fulfilled += quantity
     if (line.fulfilled === line.quantity) line.status = 'Fulfilled'
   } else throw new Error('This milestone is unavailable for the selected line.')

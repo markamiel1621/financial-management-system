@@ -1,18 +1,7 @@
-import { z } from 'zod'
 import { personas, settings } from '../config'
 import type { CartLine, DemoState, Offering, Order, OrderLine } from '../types'
-
-export const purposeSchema = z
-  .string()
-  .trim()
-  .min(5, 'Describe the business purpose in at least five characters.')
-  .max(500, 'Keep the purpose under 500 characters.')
-export const checkoutSchema = z.object({
-  purpose: purposeSchema,
-  acknowledged: z.literal(true, {
-    error: 'Acknowledge the order terms before placing your order.',
-  }),
-})
+import { checkoutSchema } from '../validation'
+export { checkoutSchema, purposeSchema } from '../validation'
 
 export function requireEmployee(state: DemoState) {
   if (state.role !== 'employee') throw new Error('Open the employee workspace to use this cart.')
@@ -52,6 +41,15 @@ function unitsInCart(state: DemoState, id: string) {
     .reduce((sum, line) => sum + line.quantity, 0)
 }
 
+// Other options share stock. Each option also has its own per-order limit.
+export function cartQuantityLimit(state: DemoState, item: Offering, option: string, add = false) {
+  const current =
+    state.cart.find((line) => line.itemId === item.id && line.option === option)?.quantity ?? 0
+  const otherUnits = unitsInCart(state, item.id) - current
+  const available = item.stock === null ? item.limit : Math.min(item.limit, item.stock - otherUnits)
+  return Math.max(0, add ? available - current : available)
+}
+
 export function changeCart(
   state: DemoState,
   itemId: string,
@@ -75,10 +73,7 @@ export function changeCart(
     }
     const issue = lineIssue(item, { ...candidate, quotedPrice: item.price })
     if (issue) throw new Error(issue)
-    if (
-      item.stock !== null &&
-      unitsInCart(state, item.id) - (existing?.quantity ?? 0) + next > item.stock
-    )
+    if (next > cartQuantityLimit(state, item, option))
       throw new Error('The combined quantity exceeds available capacity.')
     if (existing) Object.assign(existing, candidate)
     else state.cart.push(candidate)

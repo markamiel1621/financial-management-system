@@ -13,9 +13,13 @@ const filters = [
   'Rejected',
   'Cancelled',
 ]
-const selected = computed(() =>
-  filters.includes(String(route.query.status)) ? String(route.query.status) : 'All',
-)
+const tabs = filters.map((value) => ({ label: value, value }))
+const selected = computed({
+  get: () => (filters.includes(String(route.query.status)) ? String(route.query.status) : 'All'),
+  set: (value: string) => {
+    void router.replace({ query: value === 'All' ? {} : { status: value } })
+  },
+})
 const search = ref('')
 const after = ref('')
 const before = ref('')
@@ -41,43 +45,28 @@ const results = computed(() =>
         <h1>My orders</h1>
         <p class="lede">Find an order, check its progress, or respond to a request.</p>
       </div>
-      <NuxtLink to="/catalog" class="btn primary">
-        <Glyph name="grid-2x2" />
-        Browse catalog
-      </NuxtLink>
+      <UButton to="/catalog" icon="i-lucide-grid-2x2">Browse catalog</UButton>
     </div>
     <section class="panel">
       <div class="filter-bar inset">
-        <label class="search-field">
-          <Glyph name="search" />
-          <input
-            v-model="search"
-            type="search"
-            aria-label="Search orders"
-            placeholder="Search by order or item"
-          />
-        </label>
-        <label class="inline-field">
-          From
-          <input v-model="after" type="date" :max="before || undefined" />
-        </label>
-        <label class="inline-field">
-          To
-          <input v-model="before" type="date" :min="after || undefined" />
-        </label>
+        <UInput
+          v-model="search"
+          type="search"
+          class="search-field"
+          icon="i-lucide-search"
+          aria-label="Search orders"
+          placeholder="Search by order or item"
+        />
+        <UFormField label="From" orientation="horizontal">
+          <UInput v-model="after" type="date" :max="before || undefined" />
+        </UFormField>
+        <UFormField label="To" orientation="horizontal">
+          <UInput v-model="before" type="date" :min="after || undefined" />
+        </UFormField>
       </div>
-      <div class="tabs table-tabs">
-        <button
-          v-for="tab in filters"
-          :key="tab"
-          :class="{ active: selected === tab }"
-          :aria-pressed="selected === tab"
-          @click="router.replace({ query: tab === 'All' ? {} : { status: tab } })"
-        >
-          {{ tab }}
-        </button>
-      </div>
-      <OrdersTable :orders="results" />
+      <UTabs v-model="selected" :items="tabs" class="order-tabs" aria-label="Order status">
+        <template #content><OrdersTable :orders="results" /></template>
+      </UTabs>
     </section>
   </div>
 </template>

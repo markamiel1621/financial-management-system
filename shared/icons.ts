@@ -26,6 +26,7 @@ export const iconNames = [
   'layers-3',
   'layout-dashboard',
   'list-checks',
+  'loader-circle',
   'log-out',
   'menu',
   'minus',

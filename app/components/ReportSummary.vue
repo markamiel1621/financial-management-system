@@ -1,12 +1,28 @@
 <script setup lang="ts">
 import { dateLabel, money, orderTotal, verifiedTotal, fulfillmentStatus } from '#shared/orders'
 import { settings } from '#shared/config'
+import type { OrderStatus } from '#shared/types'
 const { visibleOrders, model } = useFms()
 const after = ref('')
 const before = ref('')
-const offering = ref('')
-const status = ref('')
-const office = ref('')
+const offering = ref<string | null>(null)
+const status = ref<OrderStatus | null>(null)
+const office = ref<string | null>(null)
+const offices = [
+  { label: 'All assigned offices', value: null },
+  { label: settings.office, value: settings.office },
+]
+const offerings = computed(() => [
+  { label: 'All offerings', value: null },
+  ...model.value.catalog.map((item) => ({ label: item.title, value: item.id })),
+])
+const statuses = computed(() => [
+  { label: 'All statuses', value: null },
+  ...[...new Set(visibleOrders.value.map((order) => order.status))].map((value) => ({
+    label: value,
+    value,
+  })),
+])
 const day = new Intl.DateTimeFormat('sv-SE', { timeZone: settings.timezone })
 const filtered = computed(() =>
   visibleOrders.value.filter((order) => {
@@ -52,47 +68,26 @@ const metrics = computed(() => {
 </script>
 <template>
   <div class="stack">
-    <section class="panel form-card">
+    <UCard as="section">
       <h2>Report filters</h2>
       <div class="report-filters">
-        <label class="field">
-          From
-          <input v-model="after" type="date" :max="before || undefined" />
-        </label>
-        <label class="field">
-          To
-          <input v-model="before" type="date" :min="after || undefined" />
-        </label>
-        <label class="field">
-          Office
-          <select v-model="office">
-            <option value="">All assigned offices</option>
-            <option>{{ settings.office }}</option>
-          </select>
-        </label>
-        <label class="field">
-          Offering
-          <select v-model="offering">
-            <option value="">All offerings</option>
-            <option v-for="item in model.catalog" :key="item.id" :value="item.id">
-              {{ item.title }}
-            </option>
-          </select>
-        </label>
-        <label class="field">
-          Order status
-          <select v-model="status">
-            <option value="">All statuses</option>
-            <option
-              v-for="value in [...new Set(visibleOrders.map((order) => order.status))]"
-              :key="value"
-            >
-              {{ value }}
-            </option>
-          </select>
-        </label>
+        <UFormField label="From">
+          <UInput v-model="after" type="date" :max="before || undefined" />
+        </UFormField>
+        <UFormField label="To">
+          <UInput v-model="before" type="date" :min="after || undefined" />
+        </UFormField>
+        <UFormField label="Office">
+          <USelect class="w-full" v-model="office" :items="offices" />
+        </UFormField>
+        <UFormField label="Offering">
+          <USelect class="w-full" v-model="offering" :items="offerings" />
+        </UFormField>
+        <UFormField label="Order status">
+          <USelect class="w-full" v-model="status" :items="statuses" />
+        </UFormField>
       </div>
-    </section>
+    </UCard>
     <div class="report-stats">
       <div v-for="metric in metrics" :key="metric.label" class="panel report-stat">
         <span>{{ metric.label }}</span>

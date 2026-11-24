@@ -1,39 +1,37 @@
 <script setup lang="ts">
+import type { FormSubmitEvent } from '@nuxt/ui'
+import type { z } from 'zod'
 import { settings } from '#shared/config'
 import { nextDemoTime } from '#shared/demo/clock'
-import { money } from '#shared/orders'
 import { editOffering } from '#shared/demo/catalog-admin'
+import { money } from '#shared/orders'
 import type { Offering } from '#shared/types'
+import { catalogFormSchema } from '#shared/validation'
+
 const { model, change } = useFms()
-const editing = ref('')
-const price = ref(0)
-const stock = ref<number | null>(null)
-const published = ref(true)
+const editing = ref<Offering>()
+const schema = computed(() => editing.value && catalogFormSchema(editing.value))
+const state = reactive<{ price?: number; stock?: number | null; active: boolean }>({ active: true })
+
 function open(item: Offering) {
-  editing.value = item.id
-  price.value = item.price / 100
-  stock.value = item.stock
-  published.value = item.active
+  editing.value = item
+  Object.assign(state, { price: item.price / 100, stock: item.stock, active: item.active })
 }
-function save(item: Offering) {
-  const value = change(
-    (draft) =>
-      editOffering(
-        draft,
-        item.id,
-        { price: Math.round(price.value * 100), stock: stock.value, active: published.value },
-        nextDemoTime(draft),
-      ),
+function save({ data }: FormSubmitEvent<z.output<ReturnType<typeof catalogFormSchema>>>) {
+  const item = editing.value
+  if (!item) return
+  const result = change(
+    (draft) => editOffering(draft, item.id, data, nextDemoTime(draft)),
     'Catalog updated',
   )
-  if (value.ok) editing.value = ''
+  if (result.ok) editing.value = undefined
 }
 </script>
 <template>
   <section class="panel">
     <div class="panel-head">
       <h2>Catalog offerings</h2>
-      <span class="meta-chip">{{ model.catalog.length }} offerings</span>
+      <UBadge color="neutral" variant="subtle">{{ model.catalog.length }} offerings</UBadge>
     </div>
     <article v-for="item in model.catalog" :key="item.id" class="edit-row">
       <div class="editor-heading">
@@ -45,33 +43,40 @@ function save(item: Offering) {
             {{ item.active ? 'Published' : 'Unpublished' }}
           </small>
         </div>
-        <button class="btn secondary small" @click="open(item)">Edit</button>
+        <UButton color="neutral" variant="outline" size="sm" @click="open(item)">Edit</UButton>
       </div>
-      <form v-if="editing === item.id" class="editor-form" @submit.prevent="save(item)">
-        <label class="field">
-          Unit price ({{ settings.currency }})
-          <input
-            v-model.number="price"
+      <UForm
+        v-if="editing?.id === item.id && schema"
+        class="editor-form"
+        :schema="schema"
+        :state="state"
+        v-bind="formValidation"
+        @submit="save"
+      >
+        <UFormField name="price" :label="'Unit price (' + settings.currency + ')'" required>
+          <UInput
+            v-model.number="state.price"
             type="number"
-            step="0.01"
             min="0"
-            required
+            step="0.01"
             :disabled="item.funding === 'free'"
           />
-        </label>
-        <label v-if="item.stock !== null" class="field">
-          Remaining capacity
-          <input v-model.number="stock" type="number" min="0" step="1" required />
-        </label>
-        <label class="check-label">
-          <input v-model="published" type="checkbox" />
-          Published
-        </label>
+        </UFormField>
+        <UFormField v-if="item.stock !== null" name="stock" label="Remaining capacity" required>
+          <UInput
+            type="number"
+            min="0"
+            step="1"
+            :model-value="state.stock ?? undefined"
+            @update:model-value="state.stock = $event"
+          />
+        </UFormField>
+        <UCheckbox v-model="state.active" label="Published" />
         <div class="form-actions">
-          <button class="btn primary">Save changes</button>
-          <button type="button" class="btn secondary" @click="editing = ''">Cancel</button>
+          <UButton type="submit">Save changes</UButton>
+          <UButton color="neutral" variant="outline" @click="editing = undefined">Cancel</UButton>
         </div>
-      </form>
+      </UForm>
     </article>
   </section>
 </template>

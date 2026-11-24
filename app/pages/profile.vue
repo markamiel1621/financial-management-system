@@ -11,13 +11,13 @@ const { person } = useFms()
       </div>
     </div>
     <section class="panel profile-panel">
-      <span class="avatar large">{{ person.initials }}</span>
+      <UAvatar :text="person.initials" size="3xl" color="primary" />
       <div>
         <h2>{{ person.name }}</h2>
         <p class="muted">{{ person.position }} · {{ person.office }}</p>
       </div>
     </section>
-    <section class="panel form-card">
+    <UCard as="section">
       <h2>Workspace details</h2>
       <dl class="info-list">
         <div>
@@ -33,10 +33,9 @@ const { person } = useFms()
           <dd>{{ roleNames[person.role] }}</dd>
         </div>
       </dl>
-      <NuxtLink class="btn secondary" to="/workspaces">
-        <Glyph name="layers-3" />
+      <UButton color="neutral" variant="outline" to="/workspaces" icon="i-lucide-layers-3">
         Switch demo workspace
-      </NuxtLink>
-    </section>
+      </UButton>
+    </UCard>
   </div>
 </template>

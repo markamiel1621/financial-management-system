@@ -1,31 +1,41 @@
 <script setup lang="ts">
+import type { FormSubmitEvent } from '@nuxt/ui'
+import type { z } from 'zod'
+import { cartSelectionSchema } from '#shared/validation'
 import { fundingLabels } from '#shared/config'
 import { money } from '#shared/orders'
-import { changeCart } from '#shared/demo/cart'
+import { cartQuantityLimit, changeCart } from '#shared/demo/cart'
 const route = useRoute()
 const { model, change } = useFms()
 const item = computed(() =>
   model.value.catalog.find((item) => item.id === route.params.id && item.active),
 )
-const option = ref('')
-const quantity = ref(1)
+const selection = reactive<{ option: string; quantity?: number }>({ option: '', quantity: 1 })
 const added = ref(false)
 watch(
   item,
   (next, old) => {
     if (next?.id !== old?.id) {
-      option.value = next?.options[0] ?? ''
-      quantity.value = 1
+      selection.option = next?.options[0] ?? ''
+      selection.quantity = 1
       added.value = false
     }
   },
   { immediate: true },
 )
-const limit = computed(() => Math.min(item.value?.limit ?? 0, item.value?.stock ?? Infinity))
-function add() {
-  if (!item.value) return
+const limit = computed(() =>
+  item.value ? cartQuantityLimit(model.value, item.value, selection.option, true) : 0,
+)
+watch(limit, (max) => {
+  if (selection.quantity !== undefined && max > 0 && selection.quantity > max)
+    selection.quantity = max
+})
+const schema = computed(() => cartSelectionSchema(item.value?.options ?? [], limit.value))
+function add({ data }: FormSubmitEvent<z.output<ReturnType<typeof cartSelectionSchema>>>) {
+  const offering = item.value
+  if (!offering) return
   const result = change(
-    (state) => changeCart(state, item.value!.id, option.value, quantity.value, true),
+    (draft) => changeCart(draft, offering.id, data.option, data.quantity, true),
     'Added to your cart',
   )
   added.value = result.ok
@@ -33,17 +43,16 @@ function add() {
 </script>
 <template>
   <div class="page">
-    <NuxtLink to="/catalog" class="back-link">
-      <Glyph name="chevron-left" />
+    <UButton to="/catalog" variant="link" class="self-start px-0" icon="i-lucide-chevron-left">
       Catalog
-    </NuxtLink>
+    </UButton>
     <template v-if="item">
       <div class="page-head">
         <div>
           <p class="eyebrow">{{ item.category }}</p>
           <h1>{{ item.title }}</h1>
         </div>
-        <span class="meta-chip">{{ item.sku }}</span>
+        <UBadge color="neutral" variant="subtle">{{ item.sku }}</UBadge>
       </div>
       <div class="detail-grid">
         <section class="panel offering-detail">
@@ -81,11 +90,11 @@ function add() {
             </dl>
           </div>
         </section>
-        <section class="panel form-card sticky-card">
-          <span class="type-tag">{{ item.type }}</span>
+        <UCard as="section" class="sticky-card">
+          <UBadge color="neutral" variant="soft" size="sm" class="w-fit">{{ item.type }}</UBadge>
           <h2>
             {{ item.price ? money(item.price) : 'No employee charge' }}
-            <small v-if="item.price">/ {{ item.unit }}</small>
+            <small v-if="item.price" class="font-normal text-muted">/ {{ item.unit }}</small>
           </h2>
           <p class="muted">
             {{ fundingLabels[item.funding] }} ·
@@ -93,38 +102,58 @@ function add() {
               item.review ? 'Supervisor approval required' : 'Automatically accepted at checkout'
             }}
           </p>
-          <label class="field">
-            Option
-            <select v-model="option">
-              <option v-for="choice in item.options" :key="choice">{{ choice }}</option>
-            </select>
-          </label>
-          <div class="field">
-            Quantity
-            <QuantityInput
-              :value="quantity"
-              :max="limit"
-              :label="item.title + ' quantity'"
-              @change="quantity = $event"
+          <UForm
+            :key="item.id"
+            :state="selection"
+            :schema="schema"
+            v-bind="formValidation"
+            @submit="add"
+          >
+            <UFormField label="Option" name="option" required>
+              <USelect class="w-full" v-model="selection.option" :items="item.options" />
+            </UFormField>
+            <UFormField
+              name="quantity"
+              label="Quantity"
+              required
+              :help="
+                'Up to ' +
+                item.limit +
+                ' per option. ' +
+                (item.stock === null ? 'Open capacity.' : item.stock + ' available.')
+              "
+            >
+              <QuantityInput
+                v-model="selection.quantity"
+                :max="limit"
+                :label="item.title + ' quantity'"
+              />
+            </UFormField>
+            <UAlert
+              v-if="!item.eligible || limit < 1"
+              color="warning"
+              variant="soft"
+              :description="
+                !item.eligible
+                  ? 'Your profile is ineligible for this offering.'
+                  : item.stock === 0
+                    ? 'This offering currently has no capacity.'
+                    : 'Your cart already contains the available quantity.'
+              "
             />
-            <small>
-              Up to {{ item.limit }} per option.
-              {{ item.stock === null ? 'Open capacity.' : item.stock + ' available.' }}
-            </small>
-          </div>
-          <div v-if="!item.eligible || item.stock === 0" class="notice warning">
-            {{
-              !item.eligible
-                ? 'Your profile is ineligible for this offering.'
-                : 'This offering currently has no capacity.'
-            }}
-          </div>
-          <button class="btn primary wide" :disabled="!item.eligible || limit < 1" @click="add">
-            <Glyph name="shopping-cart" />
-            Add to cart
-          </button>
-          <NuxtLink v-if="added" to="/cart" class="btn secondary wide">View cart</NuxtLink>
-        </section>
+            <UButton
+              type="submit"
+              icon="i-lucide-shopping-cart"
+              block
+              :disabled="!item.eligible || limit < 1"
+            >
+              Add to cart
+            </UButton>
+          </UForm>
+          <UButton v-if="added" to="/cart" color="neutral" variant="outline" block>
+            View cart
+          </UButton>
+        </UCard>
       </div>
     </template>
     <div v-else class="panel">

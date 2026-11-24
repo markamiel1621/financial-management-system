@@ -2,11 +2,27 @@
 import { money } from '#shared/orders'
 const { model } = useFms()
 const search = ref('')
-const category = ref('')
-const type = ref('')
-const availability = ref('')
+const category = ref<string | null>(null)
+const type = ref<string | null>(null)
+const availability = ref<string | null>(null)
 const published = computed(() => model.value.catalog.filter((item) => item.active))
-const categories = computed(() => [...new Set(published.value.map((item) => item.category))])
+const categories = computed(() => [
+  { label: 'All categories', value: null },
+  ...[...new Set(published.value.map((item) => item.category))].map((value) => ({
+    label: value,
+    value,
+  })),
+])
+const types = [
+  { label: 'All types', value: null },
+  { label: 'Product', value: 'Product' },
+  { label: 'Service', value: 'Service' },
+]
+const availabilityOptions = [
+  { label: 'All availability', value: null },
+  { label: 'Available', value: 'available' },
+  { label: 'Unavailable', value: 'unavailable' },
+]
 const items = computed(() =>
   published.value.filter(
     (item) =>
@@ -21,9 +37,9 @@ const items = computed(() =>
 )
 function clear() {
   search.value = ''
-  category.value = ''
-  type.value = ''
-  availability.value = ''
+  category.value = null
+  type.value = null
+  availability.value = null
 }
 </script>
 <template>
@@ -36,44 +52,23 @@ function clear() {
       </div>
     </div>
     <div class="filter-bar panel">
-      <label class="search-field">
-        <Glyph name="search" />
-        <input
-          v-model="search"
-          type="search"
-          aria-label="Search catalog"
-          placeholder="Search the catalog"
-        />
-      </label>
-      <label class="select-wrap">
-        <select v-model="category" aria-label="Category">
-          <option value="">All categories</option>
-          <option v-for="name in categories" :key="name">{{ name }}</option>
-        </select>
-        <Glyph name="chevron-down" />
-      </label>
-      <label class="select-wrap">
-        <select v-model="type" aria-label="Item type">
-          <option value="">All types</option>
-          <option>Product</option>
-          <option>Service</option>
-        </select>
-        <Glyph name="chevron-down" />
-      </label>
-      <label class="select-wrap">
-        <select v-model="availability" aria-label="Availability">
-          <option value="">All availability</option>
-          <option value="available">Available</option>
-          <option value="unavailable">Unavailable</option>
-        </select>
-        <Glyph name="chevron-down" />
-      </label>
+      <UInput
+        v-model="search"
+        type="search"
+        icon="i-lucide-search"
+        class="search-field"
+        aria-label="Search catalog"
+        placeholder="Search the catalog"
+      />
+      <USelect v-model="category" :items="categories" aria-label="Category" />
+      <USelect v-model="type" :items="types" aria-label="Item type" />
+      <USelect v-model="availability" :items="availabilityOptions" aria-label="Availability" />
     </div>
     <div class="list-caption" aria-live="polite">
       {{ items.length }} {{ items.length === 1 ? 'offering' : 'offerings' }}
-      <button v-if="search || category || type || availability" class="text-link" @click="clear">
+      <UButton v-if="search || category || type || availability" variant="link" @click="clear">
         Clear filters
-      </button>
+      </UButton>
     </div>
     <div v-if="items.length" class="catalog-grid">
       <NuxtLink
@@ -86,7 +81,7 @@ function clear() {
         <div class="catalog-card-body">
           <div class="catalog-meta">
             <span>{{ item.category }}</span>
-            <span class="type-tag">{{ item.type }}</span>
+            <UBadge color="neutral" variant="soft" size="sm" class="w-fit">{{ item.type }}</UBadge>
           </div>
           <h2>{{ item.title }}</h2>
           <p>{{ item.description }}</p>
@@ -112,7 +107,7 @@ function clear() {
         text="Try another keyword or clear the filters."
         icon="search"
       >
-        <button class="btn secondary" @click="clear">Clear filters</button>
+        <UButton color="neutral" variant="outline" @click="clear">Clear filters</UButton>
       </EmptyState>
     </div>
   </div>

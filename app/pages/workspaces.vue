@@ -14,8 +14,11 @@ const confirmReset = ref(false)
       </div>
     </div>
     <div class="role-grid">
-      <button
+      <UButton
         v-for="person in personas"
+        color="neutral"
+        variant="outline"
+        :aria-pressed="role === person.role"
         :key="person.id"
         class="panel role-card"
         :class="{ current: role === person.role }"
@@ -25,12 +28,12 @@ const confirmReset = ref(false)
           <span class="icon-box" :class="roleDetails[person.role].color">
             <Glyph :name="roleDetails[person.role].icon" />
           </span>
-          <span v-if="role === person.role" class="meta-chip">Current</span>
+          <UBadge v-if="role === person.role" variant="soft">Current</UBadge>
         </div>
         <h2>{{ roleNames[person.role] }}</h2>
         <strong>{{ person.name }}</strong>
         <p>{{ roleDetails[person.role].description }}</p>
-      </button>
+      </UButton>
     </div>
     <section class="panel reset-card">
       <div>
@@ -39,13 +42,20 @@ const confirmReset = ref(false)
           Restore the original sample orders, catalog, and empty cart in this browser.
         </p>
       </div>
-      <button v-if="!confirmReset" class="btn secondary" @click="confirmReset = true">
-        <Glyph name="rotate-ccw" />
+      <UButton
+        v-if="!confirmReset"
+        color="neutral"
+        variant="outline"
+        @click="confirmReset = true"
+        icon="i-lucide-rotate-ccw"
+      >
         Reset demo
-      </button>
+      </UButton>
       <div v-else class="form-actions">
-        <button class="btn danger" @click="reset">Confirm reset</button>
-        <button class="btn secondary" @click="confirmReset = false">Keep changes</button>
+        <UButton color="error" variant="soft" @click="reset">Confirm reset</UButton>
+        <UButton color="neutral" variant="outline" @click="confirmReset = false">
+          Keep changes
+        </UButton>
       </div>
     </section>
   </div>

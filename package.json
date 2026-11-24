@@ -12,7 +12,7 @@
     "build": "bun --bun nuxt build",
     "generate": "bun --bun nuxt generate",
     "preview": "bun --bun nuxt preview",
-    "typecheck": "bun --bun nuxt typecheck",
+    "typecheck": "bun --bun nuxt prepare && bun --bun vue-tsc --build --noEmit",
     "test": "bun test tests",
     "db:generate": "bun --bun drizzle-kit generate",
     "presentation": "bun run generate && bun scripts/presentation.ts",

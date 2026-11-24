@@ -1,60 +1,52 @@
 <script setup lang="ts">
+import type { FormSubmitEvent } from '@nuxt/ui'
+import type { z } from 'zod'
 import { nextDemoTime } from '#shared/demo/clock'
 import { fundingLabels, settings } from '#shared/config'
-import { checkoutSchema, placeOrder, purposeSchema } from '#shared/demo/cart'
+import { placeOrder } from '#shared/demo/cart'
 import { money } from '#shared/orders'
+import { checkoutSchema, purposeFormSchema } from '#shared/validation'
+
 const { model, person, change } = useFms()
 const { rows, total, issue } = useCart()
 const appName = useAppName()
 const step = ref(1)
-const purpose = ref('')
-const acknowledged = ref(false)
+const state = reactive({ purpose: '', acknowledged: false })
 const busy = ref(false)
 const error = ref('')
-const revision = ref(model.value.cartRevision)
-const steps = ['Request details', 'Processing', 'Review & place']
-function next() {
+const revision = model.value.cartRevision
+const steps = [{ title: 'Request details' }, { title: 'Processing' }, { title: 'Review & place' }]
+
+function showStep(next: number) {
   error.value = ''
-  const validation = purposeSchema.safeParse(purpose.value)
-  if (!validation.success) {
-    error.value = validation.error.issues[0]!.message
-    return
-  }
-  step.value++
+  step.value = next
 }
-function back() {
-  step.value--
-  error.value = ''
-}
-async function place() {
+async function place({ data }: FormSubmitEvent<z.output<typeof checkoutSchema>>) {
   if (busy.value) return
   error.value = ''
-  const valid = checkoutSchema.safeParse({
-    purpose: purpose.value,
-    acknowledged: acknowledged.value,
-  })
-  if (!valid.success) {
-    error.value = valid.error.issues[0]!.message
-    return
-  }
   busy.value = true
-  const result = change((draft) =>
-    placeOrder(draft, revision.value, purpose.value, acknowledged.value, nextDemoTime(draft), appName),
-  )
-  if (result.ok)
-    await navigateTo({ path: '/orders/' + result.value, query: { placed: '1' } }, { replace: true })
-  else {
-    error.value = result.error
+  try {
+    const result = change((draft) =>
+      placeOrder(draft, revision, data.purpose, data.acknowledged, nextDemoTime(draft), appName),
+    )
+    if (result.ok) {
+      await navigateTo(
+        { path: '/orders/' + result.value, query: { placed: '1' } },
+        { replace: true },
+      )
+    } else {
+      error.value = result.error
+    }
+  } finally {
     busy.value = false
   }
 }
 </script>
 <template>
   <div class="page">
-    <NuxtLink to="/cart" class="back-link">
-      <Glyph name="chevron-left" />
+    <UButton to="/cart" variant="link" class="self-start px-0" icon="i-lucide-chevron-left">
       My cart
-    </NuxtLink>
+    </UButton>
     <div class="page-head">
       <div>
         <p class="eyebrow">Employee workspace</p>
@@ -63,111 +55,118 @@ async function place() {
     </div>
     <div v-if="issue && !busy" class="panel">
       <EmptyState title="Review your cart" :text="issue">
-        <NuxtLink class="btn primary" to="/cart">Open cart</NuxtLink>
+        <UButton to="/cart">Open cart</UButton>
       </EmptyState>
     </div>
     <div v-else class="detail-grid">
-      <section class="panel form-card">
-        <ol class="stepper">
-          <li
-            v-for="(label, i) in steps"
-            :key="label"
-            :class="{ current: i + 1 === step, done: i + 1 < step }"
-            :aria-current="i + 1 === step ? 'step' : undefined"
+      <UCard as="section">
+        <p class="sr-only" role="status">
+          Step {{ step }} of {{ steps.length }}. {{ steps[step - 1]?.title }}
+        </p>
+        <UStepper :model-value="step - 1" :items="steps" size="sm" disabled aria-hidden="true" />
+        <UForm
+          v-if="step === 1"
+          :schema="purposeFormSchema"
+          :state="state"
+          v-bind="formValidation"
+          @submit="showStep(2)"
+        >
+          <h2>Request details</h2>
+          <dl class="info-list">
+            <div>
+              <dt>Employee</dt>
+              <dd>{{ person.name }} · {{ person.id }}</dd>
+            </div>
+            <div>
+              <dt>Office</dt>
+              <dd>{{ person.office }}</dd>
+            </div>
+          </dl>
+          <UAlert
+            v-for="{ item, line } in rows"
+            :key="line.itemId + line.option"
+            :title="item?.title"
+            :description="item?.requirement"
+            variant="subtle"
+          />
+          <UFormField name="purpose" label="Business purpose" required>
+            <UTextarea
+              v-model="state.purpose"
+              :rows="3"
+              :maxlength="500"
+              placeholder="Describe what your office needs and why."
+            />
+          </UFormField>
+          <div class="form-actions">
+            <UButton type="submit">Continue</UButton>
+          </div>
+        </UForm>
+        <template v-else-if="step === 2">
+          <h2>How your order will be processed</h2>
+          <div
+            v-for="{ item, line } in rows"
+            :key="line.itemId + line.option"
+            class="processing-line"
           >
-            <span>{{ i + 1 }}</span>
-            {{ label }}
-          </li>
-        </ol>
-        <form @submit.prevent="step === 3 ? place() : next()">
-          <template v-if="step === 1">
-            <h2>Request details</h2>
+            <h3>{{ item?.title }} · {{ line.option }}</h3>
+            <p>{{ item?.delivery }}</p>
             <dl class="info-list">
               <div>
-                <dt>Employee</dt>
-                <dd>{{ person.name }} · {{ person.id }}</dd>
+                <dt>Approval</dt>
+                <dd>{{ item?.review ? 'Supervisor review' : 'Accepted by policy' }}</dd>
               </div>
               <div>
-                <dt>Office</dt>
-                <dd>{{ person.office }}</dd>
+                <dt>Funding</dt>
+                <dd>{{ item && fundingLabels[item.funding] }}</dd>
               </div>
             </dl>
-            <div class="notice" v-for="{ item } in rows" :key="item?.id">
-              <strong>{{ item?.title }}</strong>
-              <p>{{ item?.requirement }}</p>
-            </div>
-            <label class="field">
-              Business purpose
-              <textarea
-                v-model="purpose"
-                rows="3"
-                maxlength="500"
-                required
-                placeholder="Describe what your office needs and why."
-              />
-            </label>
-          </template>
-          <template v-else-if="step === 2">
-            <h2>How your order will be processed</h2>
-            <div
-              v-for="{ item, line } in rows"
-              :key="line.itemId + line.option"
-              class="processing-line"
-            >
-              <h3>{{ item?.title }} · {{ line.option }}</h3>
-              <p>{{ item?.delivery }}</p>
-              <dl class="info-list">
-                <div>
-                  <dt>Approval</dt>
-                  <dd>{{ item?.review ? 'Supervisor review' : 'Accepted by policy' }}</dd>
-                </div>
-                <div>
-                  <dt>Funding</dt>
-                  <dd>{{ item && fundingLabels[item.funding] }}</dd>
-                </div>
-              </dl>
-            </div>
-          </template>
-          <template v-else>
-            <h2>Review and place order</h2>
-            <p class="muted">{{ person.name }} · {{ person.office }}</p>
-            <p class="purpose-preview">{{ purpose }}</p>
-            <div
-              v-for="{ item, line } in rows"
-              :key="line.itemId + line.option"
-              class="summary-row"
-            >
-              <span>
-                {{ item?.title }}
-                <small>
-                  {{ line.option }} · {{ line.quantity }} × {{ money(item?.price ?? 0) }}
-                </small>
-              </span>
-              <strong>{{ money(line.quantity * (item?.price ?? 0)) }}</strong>
-            </div>
-            <div class="notice">
-              <strong>Order terms · {{ settings.policy }}</strong>
-              <p>
-                Prices are saved at checkout. Required approvals and financial verification must
-                clear before fulfillment. Cancellation is available before finance or fulfillment
-                activity.
-              </p>
-            </div>
-            <label class="check-label">
-              <input v-model="acknowledged" type="checkbox" />
-              I have reviewed the order and agree to these terms.
-            </label>
-          </template>
-          <p v-if="error" class="notice warning" role="alert">{{ error }}</p>
-          <div class="form-actions">
-            <button v-if="step > 1" type="button" class="btn secondary" @click="back">Back</button>
-            <button type="submit" class="btn primary" :disabled="busy">
-              {{ step === 3 ? (busy ? 'Placing order…' : 'Place order') : 'Continue' }}
-            </button>
           </div>
-        </form>
-      </section>
-      <aside class="panel form-card sticky-card">
+          <div class="form-actions">
+            <UButton color="neutral" variant="outline" @click="showStep(1)">Back</UButton>
+            <UButton @click="showStep(3)">Continue</UButton>
+          </div>
+        </template>
+        <UForm
+          v-else
+          :schema="checkoutSchema"
+          :state="state"
+          v-bind="formValidation"
+          @submit="place"
+        >
+          <h2>Review and place order</h2>
+          <p class="muted">{{ person.name }} · {{ person.office }}</p>
+          <p class="purpose-preview">{{ state.purpose.trim() }}</p>
+          <div v-for="{ item, line } in rows" :key="line.itemId + line.option" class="summary-row">
+            <span>
+              {{ item?.title }}
+              <small>{{ line.option }} · {{ line.quantity }} × {{ money(item?.price ?? 0) }}</small>
+            </span>
+            <strong>{{ money(line.quantity * (item?.price ?? 0)) }}</strong>
+          </div>
+          <UAlert
+            :title="'Order terms · ' + settings.policy"
+            variant="subtle"
+            description="Prices are saved at checkout. Required approvals and financial verification must clear before fulfillment. Cancellation is available before finance or fulfillment activity."
+          />
+          <UFormField name="acknowledged">
+            <UCheckbox
+              v-model="state.acknowledged"
+              label="I have reviewed the order and agree to these terms."
+              required
+            />
+          </UFormField>
+          <UAlert v-if="error" color="error" variant="soft" :description="error" role="alert" />
+          <div class="form-actions">
+            <UButton color="neutral" variant="outline" :disabled="busy" @click="showStep(2)">
+              Back
+            </UButton>
+            <UButton type="submit" :loading="busy">
+              {{ busy ? 'Placing order…' : 'Place order' }}
+            </UButton>
+          </div>
+        </UForm>
+      </UCard>
+      <UCard as="aside" class="sticky-card">
         <h2>Order summary</h2>
         <div v-for="{ line, item } in rows" :key="line.itemId + line.option" class="summary-row">
           <span>
@@ -180,7 +179,7 @@ async function place() {
           <span>Total</span>
           <strong>{{ money(total) }}</strong>
         </div>
-      </aside>
+      </UCard>
     </div>
   </div>
 </template>

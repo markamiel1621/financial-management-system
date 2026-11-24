@@ -1,31 +1,21 @@
 <script setup lang="ts">
-const props = defineProps<{ value: number; max: number; label: string }>()
-const emit = defineEmits<{ change: [number] }>()
-function update(event: Event) {
-  const field = event.target as HTMLInputElement
-  const next = Number(field.value)
-  if (Number.isInteger(next) && next >= 1 && next <= props.max) emit('change', next)
-  else field.value = String(props.value)
-}
+defineProps<{ max: number; label: string }>()
+const quantity = defineModel<number>()
 </script>
 <template>
-  <div class="quantity">
-    <button
-      type="button"
-      :aria-label="'Decrease ' + label"
-      :disabled="value <= 1"
-      @click="emit('change', value - 1)"
-    >
-      <Glyph name="minus" />
-    </button>
-    <input :value="value" type="number" min="1" :max="max" :aria-label="label" @change="update" />
-    <button
-      type="button"
-      :aria-label="'Increase ' + label"
-      :disabled="value >= max"
-      @click="emit('change', value + 1)"
-    >
-      <Glyph name="plus" />
-    </button>
-  </div>
+  <UInputNumber
+    v-model="quantity"
+    :min="1"
+    :max="Math.max(1, max)"
+    :disabled="max < 1"
+    :aria-label="label"
+    class="w-32"
+  >
+    <template #decrement>
+      <UButton icon="i-lucide-minus" variant="link" size="sm" :aria-label="'Decrease ' + label" />
+    </template>
+    <template #increment>
+      <UButton icon="i-lucide-plus" variant="link" size="sm" :aria-label="'Increase ' + label" />
+    </template>
+  </UInputNumber>
 </template>

@@ -88,10 +88,10 @@ function age(created: string) {
     <section v-else-if="section === 'administration'" class="panel">
       <div class="panel-head">
         <h2>Account directory</h2>
-        <span class="meta-chip">Demo assignments</span>
+        <UBadge color="neutral" variant="subtle">Demo assignments</UBadge>
       </div>
       <div v-for="account in personas" :key="account.id" class="directory-row">
-        <span class="avatar">{{ account.initials }}</span>
+        <UAvatar :text="account.initials" color="primary" />
         <div>
           <h3>{{ account.name }}</h3>
           <small>{{ account.id }} · {{ account.office }}</small>
@@ -105,7 +105,7 @@ function age(created: string) {
     <section v-else-if="section === 'audit'" class="panel">
       <div class="panel-head">
         <h2>Event history</h2>
-        <span class="meta-chip">{{ audit.length }} events</span>
+        <UBadge color="neutral" variant="subtle">{{ audit.length }} events</UBadge>
       </div>
       <div v-for="event in audit" :key="event.id" class="audit-row">
         <span class="icon-box slate"><Glyph name="history" /></span>
@@ -119,20 +119,20 @@ function age(created: string) {
     </section>
     <section v-else class="panel">
       <div class="filter-bar inset">
-        <label class="search-field">
-          <Glyph name="search" />
-          <input
-            v-model="search"
-            type="search"
-            placeholder="Search orders or items"
-            aria-label="Search queue"
-          />
-        </label>
-        <label v-if="section === 'fulfillment'" class="check-label">
-          <input v-model="readyOnly" type="checkbox" />
-          Ready to work only
-        </label>
-        <span class="meta-chip">{{ queue.length }} orders</span>
+        <UInput
+          v-model="search"
+          type="search"
+          class="search-field"
+          icon="i-lucide-search"
+          placeholder="Search orders or items"
+          aria-label="Search queue"
+        />
+        <UCheckbox
+          v-if="section === 'fulfillment'"
+          v-model="readyOnly"
+          label="Ready to work only"
+        />
+        <UBadge color="neutral" variant="subtle">{{ queue.length }} orders</UBadge>
       </div>
       <article v-for="order in queue" :key="order.id" class="queue-row">
         <div class="queue-heading">
@@ -165,9 +165,9 @@ function age(created: string) {
         </div>
         <div class="queue-footer">
           <p>{{ nextAction(order) }}</p>
-          <NuxtLink class="btn secondary small" :to="'/orders/' + order.id">
+          <UButton color="neutral" variant="outline" size="sm" :to="'/orders/' + order.id">
             {{ actionLabel(order) }}
-          </NuxtLink>
+          </UButton>
         </div>
       </article>
       <EmptyState

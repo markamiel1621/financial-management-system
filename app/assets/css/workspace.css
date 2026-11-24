@@ -106,50 +106,12 @@
   color: var(--muted);
   font-size: 0.76rem;
 }
-.nav-label {
-  color: #787184;
-  margin: 0 12px 9px;
-}
-.nav-group {
-  margin-top: 31px;
-}
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 10px 13px;
-  margin: 2px 0;
-  min-height: 42px;
-  border-radius: 8px;
-  font-size: 0.91rem;
-  font-weight: 510;
-  color: #595365;
-}
-.nav-link .glyph {
-  width: 18px;
-  height: 18px;
-}
-.nav-link:hover,
 .switch-link:hover {
   background: #f5f2fa;
 }
-.nav-link.selected,
 .switch-link.selected {
   color: #633aa6;
   background: #eee7fa;
-  font-weight: 650;
-}
-.nav-count {
-  margin-left: auto;
-  display: inline-grid;
-  place-items: center;
-  min-width: 22px;
-  height: 19px;
-  padding: 0 5px;
-  border-radius: 6px;
-  color: #6d5093;
-  background: #eee7f8;
-  font-size: 0.76rem;
 }
 .side-bottom {
   margin-top: auto;
@@ -171,10 +133,6 @@
   width: 15px;
   height: 15px;
 }
-.signout {
-  width: 100%;
-  margin-top: 10px;
-}
 .workspace {
   margin-left: var(--sidebar-width);
 }
@@ -189,7 +147,6 @@
 }
 .bread,
 .header-tools,
-.cart-link,
 .user-link {
   display: flex;
   align-items: center;
@@ -213,31 +170,6 @@
 .header-tools {
   gap: 12px;
 }
-.cart-link {
-  gap: 8px;
-  color: #393442;
-  font-size: 0.875rem;
-  font-weight: 620;
-}
-.cart-link b {
-  color: #6844a1;
-  background: #f1ecf8;
-  border-radius: 5px;
-  min-width: 20px;
-  padding: 0 5px;
-  font-size: 0.76rem;
-  text-align: center;
-}
-.bell i {
-  position: absolute;
-  top: 8px;
-  right: 9px;
-  width: 7px;
-  height: 7px;
-  border: 1.5px solid white;
-  border-radius: 50%;
-  background: #9c70cf;
-}
 .toolbar-divider {
   height: 25px;
   width: 1px;
@@ -245,24 +177,6 @@
 }
 .user-link {
   gap: 9px;
-}
-.avatar {
-  display: inline-grid;
-  place-items: center;
-  width: 35px;
-  height: 35px;
-  flex: none;
-  border-radius: 50%;
-  background: #ede6fa;
-  border: 1px solid #dcd1ef;
-  color: #66469e;
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-.avatar.large {
-  width: 63px;
-  height: 63px;
-  font-size: 1.35rem;
 }
 .user-info {
   line-height: 1.25;
@@ -292,14 +206,7 @@
   min-height: 53px;
 }
 .date-chip {
-  padding: 7px 11px;
-  border-radius: 8px;
-  font-size: 0.83rem;
   white-space: nowrap;
-}
-.date-chip .glyph {
-  width: 15px;
-  height: 15px;
 }
 .welcome {
   position: relative;
@@ -353,18 +260,12 @@
     transparent 46px 68px
   );
 }
-.btn.hero-button {
-  background: #fff;
+.hero-button {
+  background: white;
   color: #483269;
-  padding: 0.66rem 0.98rem;
-  box-shadow: 0 3px 5px #160b2a24;
 }
-.btn.hero-button:hover {
+.hero-button:hover {
   background: #f1eaff;
-}
-.btn.hero-button .glyph {
-  width: 16px;
-  height: 16px;
 }
 .stats-grid {
   display: grid;

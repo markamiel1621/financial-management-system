@@ -12,9 +12,7 @@ useHead({ title: useAppName() })
         <BrandMark />
         <h1>{{ issue ? 'Workspace unavailable' : 'Loading workspace' }}</h1>
         <p aria-live="polite">{{ issue || 'Opening the sample records…' }}</p>
-        <button v-if="issue" class="btn primary" @click="reloadNuxtApp({ force: true })">
-          Retry
-        </button>
+        <UButton v-if="issue" @click="reloadNuxtApp({ force: true })">Retry</UButton>
       </div>
     </div>
     <NuxtPage v-else-if="route.path === '/login'" />

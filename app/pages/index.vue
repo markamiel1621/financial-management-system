@@ -12,6 +12,10 @@ const dateFormat = new Intl.DateTimeFormat('en-GB', {
   timeZone: settings.timezone,
 })
 const date = computed(() => dateFormat.format(demoTime(model.value)))
+const tabs = ['All orders', 'Awaiting review', 'Action required'].map((value) => ({
+  label: value,
+  value,
+}))
 const filter = ref('All orders')
 const matches = computed(() =>
   visibleOrders.value.filter(
@@ -58,10 +62,15 @@ const stats = computed(() => [
         <p class="eyebrow">Employee workspace</p>
         <h1>Dashboard</h1>
       </div>
-      <span class="date-chip">
-        <Glyph name="calendar-days" />
+      <UBadge
+        color="neutral"
+        variant="outline"
+        icon="i-lucide-calendar-days"
+        size="lg"
+        class="date-chip"
+      >
         {{ date }}
-      </span>
+      </UBadge>
     </div>
     <section class="welcome">
       <div class="hero-contours" aria-hidden="true" />
@@ -69,8 +78,13 @@ const stats = computed(() => [
       <div class="welcome-copy">
         <h2>Welcome back, {{ person.name.split(' ')[0] }}.</h2>
         <p>Find products and services for your office, and keep track of every order.</p>
-        <UButton to="/catalog" class="btn hero-button" color="neutral" variant="solid">
-          <Glyph name="grid-2x2" />
+        <UButton
+          to="/catalog"
+          class="hero-button"
+          icon="i-lucide-grid-2x2"
+          color="neutral"
+          variant="outline"
+        >
           Browse catalog
         </UButton>
       </div>
@@ -93,20 +107,11 @@ const stats = computed(() => [
       <section class="panel recent">
         <div class="panel-head">
           <h2>Recent orders</h2>
-          <NuxtLink to="/orders" class="text-link">View all</NuxtLink>
+          <UButton to="/orders" variant="link">View all</UButton>
         </div>
-        <div class="tabs table-tabs" aria-label="Recent order filters">
-          <button
-            v-for="tab in ['All orders', 'Awaiting review', 'Action required']"
-            :key="tab"
-            :class="{ active: filter === tab }"
-            :aria-pressed="filter === tab"
-            @click="filter = tab"
-          >
-            {{ tab }}
-          </button>
-        </div>
-        <OrdersTable :orders="matches.slice(0, 5)" compact />
+        <UTabs v-model="filter" :items="tabs" class="order-tabs" aria-label="Recent order filters">
+          <template #content><OrdersTable :orders="matches.slice(0, 5)" compact /></template>
+        </UTabs>
       </section>
       <ActivityFeed />
     </div>

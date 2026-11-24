@@ -14,6 +14,15 @@ import {
 const route = useRoute()
 const { role, visibleOrders } = useFms()
 const order = computed(() => visibleOrders.value.find((order) => order.id === route.params.id))
+const timeline = computed(
+  () =>
+    order.value?.events.map((event) => ({
+      title: event.title,
+      date: [dateLabel(event.at), timeLabel(event.at), event.actor].join(' · '),
+      description: event.note,
+      icon: 'i-lucide-check',
+    })) ?? [],
+)
 const back = computed(() =>
   role.value === 'employee' ? '/orders' : roleHome[role.value ?? 'employee'],
 )
@@ -23,20 +32,24 @@ const placed = computed(
 </script>
 <template>
   <div class="page">
-    <NuxtLink :to="back" class="back-link">
-      <Glyph name="chevron-left" />
+    <UButton :to="back" variant="link" class="self-start px-0" icon="i-lucide-chevron-left">
       {{ role === 'employee' ? 'My orders' : 'Staff workspace' }}
-    </NuxtLink>
+    </UButton>
     <template v-if="order">
-      <div v-if="placed" class="confirmation" role="status">
-        <span class="icon-box mint"><Glyph name="check-check" /></span>
-        <div>
-          <strong>Order placed successfully</strong>
-          <p>Your order number is {{ order.id }}.</p>
-        </div>
-        <NuxtLink :to="'/orders/' + order.id" class="text-link">View order</NuxtLink>
-        <NuxtLink to="/catalog" class="text-link">Continue browsing</NuxtLink>
-      </div>
+      <UAlert
+        v-if="placed"
+        color="success"
+        variant="subtle"
+        icon="i-lucide-check-check"
+        role="status"
+        title="Order placed successfully"
+        :description="'Your order number is ' + order.id + '.'"
+      >
+        <template #actions>
+          <UButton :to="'/orders/' + order.id" variant="link" size="sm">View order</UButton>
+          <UButton to="/catalog" variant="link" size="sm">Continue browsing</UButton>
+        </template>
+      </UAlert>
       <div class="page-head">
         <div>
           <p class="eyebrow">Order details</p>
@@ -62,19 +75,18 @@ const placed = computed(
           <StateBadge :value="field.value" />
         </div>
       </div>
-      <div class="next-action">
-        <Glyph name="list-checks" />
-        <div>
-          <strong>Next action</strong>
-          <p>{{ nextAction(order) }}</p>
-        </div>
-      </div>
+      <UAlert
+        title="Next action"
+        :description="nextAction(order)"
+        icon="i-lucide-list-checks"
+        variant="subtle"
+      />
       <div class="detail-grid">
         <div class="stack">
           <section class="panel">
             <div class="panel-head">
               <h2>Order items</h2>
-              <span class="meta-chip">{{ order.lines.length }} lines</span>
+              <UBadge color="neutral" variant="subtle">{{ order.lines.length }} lines</UBadge>
             </div>
             <div v-for="line in order.lines" :key="line.itemId + line.option" class="order-line">
               <div>
@@ -97,24 +109,13 @@ const placed = computed(
             </div>
           </section>
           <OrderActions :key="order.id + role" :order="order" />
-          <section class="panel form-card">
+          <UCard as="section">
             <h2>Order timeline</h2>
-            <ol class="timeline">
-              <li v-for="event in order.events" :key="event.id">
-                <span class="timeline-node"><Glyph name="check" /></span>
-                <div>
-                  <strong>{{ event.title }}</strong>
-                  <small>
-                    {{ dateLabel(event.at) }} · {{ timeLabel(event.at) }} · {{ event.actor }}
-                  </small>
-                  <p>{{ event.note }}</p>
-                </div>
-              </li>
-            </ol>
-          </section>
+            <UTimeline :items="timeline" :model-value="timeline.length - 1" />
+          </UCard>
         </div>
         <aside class="stack">
-          <section class="panel form-card">
+          <UCard as="section">
             <h2>Funding details</h2>
             <dl class="info-list vertical">
               <div>
@@ -149,8 +150,8 @@ const placed = computed(
                 </dd>
               </div>
             </dl>
-          </section>
-          <section class="panel form-card">
+          </UCard>
+          <UCard as="section">
             <h2>Request details</h2>
             <dl class="info-list vertical">
               <div>
@@ -162,7 +163,7 @@ const placed = computed(
                 <dd>{{ order.policy }}</dd>
               </div>
             </dl>
-          </section>
+          </UCard>
         </aside>
       </div>
     </template>
@@ -171,7 +172,7 @@ const placed = computed(
         title="Order unavailable"
         text="This workspace does not have access to that order."
       >
-        <NuxtLink :to="back" class="btn secondary">Back to workspace</NuxtLink>
+        <UButton :to="back" color="neutral" variant="outline">Back to workspace</UButton>
       </EmptyState>
     </div>
   </div>
