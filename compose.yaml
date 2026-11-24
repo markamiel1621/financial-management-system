@@ -1,0 +1,20 @@
+services:
+  app:
+    build: .
+    environment:
+      NUXT_PUBLIC_APP_NAME: ${NUXT_PUBLIC_APP_NAME:-FMS}
+    ports:
+      - "127.0.0.1:3000:3000"
+  db:
+    image: postgres:17-alpine
+    profiles: [database]
+    environment:
+      POSTGRES_DB: folio
+      POSTGRES_USER: folio
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-folio_local}
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - folio_pg:/var/lib/postgresql/data
+volumes:
+  folio_pg:
