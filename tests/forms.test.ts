@@ -47,18 +47,27 @@ test('payment fields enforce centavo precision and the outstanding balance', () 
 
 test('catalog editing distinguishes empty capacity, zero capacity and an unlimited offering', () => {
   const { catalog } = createDemo()
-  const limited = catalogFormSchema(catalog.find((item) => item.id === 'office-supplies')!)
-  const edit = { price: 19.99, stock: 0, active: false }
-  expect(limited.parse(edit)).toEqual({ ...edit, price: 1999 })
+  const product = catalog.find((item) => item.type === 'Product')!
+  const edit = { ...product, options: 'Small\nLarge', price: 19.99, stock: 0, active: false }
+  const data = catalogFormSchema.parse(edit)
+  expect(data.price).toBe(1999)
+  expect(data.options).toEqual(['Small', 'Large'])
   for (const stock of [undefined, null, '', -1, 0.5]) {
-    expect(limited.safeParse({ ...edit, stock }).success).toBe(false)
+    expect(catalogFormSchema.safeParse({ ...edit, stock }).success).toBe(false)
   }
-  expect(limited.safeParse({ ...edit, price: 0 }).success).toBe(false)
-  const free = catalogFormSchema(
-    catalog.find((item) => item.funding === 'free' && item.stock === null)!,
-  )
-  expect(free.parse({ ...edit, price: 0, stock: null }).stock).toBeNull()
-  expect(free.safeParse({ ...edit, price: 0.01, stock: null }).success).toBe(false)
+  for (const invalid of [
+    { price: 0 },
+    { price: 1.001 },
+    { title: ' ' },
+    { funding: undefined },
+    { limit: 0 },
+    { options: '  ' },
+  ]) {
+    expect(catalogFormSchema.safeParse({ ...edit, ...invalid }).success).toBe(false)
+  }
+  const freeService = { ...edit, type: 'Service', funding: 'free', price: 0, stock: null }
+  expect(catalogFormSchema.parse(freeService).stock).toBeNull()
+  expect(catalogFormSchema.safeParse({ ...freeService, price: 0.01 }).success).toBe(false)
 })
 
 test('review and fulfillment validate only the fields required by the selected action', () => {

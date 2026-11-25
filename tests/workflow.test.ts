@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { createDemo } from '../shared/demo/seed'
 import { acceptPrice, cartIssue, changeCart, placeOrder } from '../shared/demo/cart'
-import { editOffering } from '../shared/demo/catalog-admin'
+import { createOffering, editOffering, nextItemCode } from '../shared/demo/catalog-admin'
 import {
   cancelOrder,
   fulfillLine,
@@ -167,4 +167,46 @@ test('rejecting a reviewed request releases its reserved units and preserves its
   expect(item.stock).toBe(32)
   expect(order.events.at(-1)?.note).toBe('Outside the office plan')
   expect(() => reviewOrder(state, order, 'reject', 'Repeat rejection', at)).toThrow()
+})
+
+describe('catalog manager', () => {
+  test('creates, publishes and edits an orderable item with a stable identity', () => {
+    const state = createDemo()
+    const template = state.catalog[0]!
+    const details = { ...template, title: 'Binder', sku: '  prd-001  ', price: 3500, stock: 3 }
+    expect(() => createOffering(state, details, at)).toThrow('catalog manager')
+    state.role = 'catalog'
+    expect(nextItemCode(state.catalog, 'Product')).toBe('PRD-001')
+    const id = createOffering(state, details, at)
+    const item = state.catalog.find((row) => row.id === id)!
+    expect(item.sku).toBe('PRD-001')
+    expect(nextItemCode(state.catalog, 'Product')).toBe('PRD-002')
+    expect(nextItemCode(state.catalog, 'Service')).toBe('SVC-001')
+    expect(state.audit.at(-1)?.title).toBe('Catalog item created')
+    expect(() => createOffering(state, details, at)).toThrow('already in use')
+    expect(() => editOffering(state, id, { sku: template.sku.toLowerCase() }, at)).toThrow(
+      'already in use',
+    )
+    expect(item.sku).toBe('PRD-001')
+    state.role = 'employee'
+    changeCart(state, id, item.options[0]!, 2, true)
+    placeOrder(state, state.cartRevision, purpose, true, at)
+    expect(item.stock).toBe(1)
+    state.role = 'catalog'
+    editOffering(
+      state,
+      id,
+      { sku: 'BND-123', title: 'Folder', funding: 'free', price: 0, active: false },
+      at,
+    )
+    expect(item.id).toBe(id)
+    expect(item.title).toBe('Folder')
+    expect(state.audit.at(-1)?.title).toBe('Catalog updated')
+    expect(state.orders[0]!.lines[0]).toMatchObject({
+      sku: 'PRD-001',
+      title: 'Binder',
+      price: 3500,
+      itemId: id,
+    })
+  })
 })
