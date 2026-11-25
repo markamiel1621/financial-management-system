@@ -10,18 +10,64 @@
   --accent: #6543ba;
   --accent-dark: #51329c;
   --accent-pale: #f0eaff;
+  --raised: #f8f6fc;
+  --hover: #f5f2fa;
+  --standalone: #f1edf7;
+  --accent-line: #dcd2ed;
+  --accent-outline: #b295d3;
+  --focus: #8866d4;
+  --shadow: #30264504;
+  --shadow-hover: #3c275111;
   --sidebar-width: 224px;
   --radius: 16px;
   --ui-primary: #6543ba;
   --ui-success: #217450;
   --ui-warning: #805613;
   --ui-error: #a03f4c;
+  color-scheme: light;
+}
+:root.dark {
+  --ink: #f1edf8;
+  --muted: #b8afc8;
+  --soft: #171421;
+  --paper: #211c2e;
+  --line: #3d344e;
+  --accent: #bca1ff;
+  --accent-dark: #cbb6ff;
+  --accent-pale: #36274e;
+  --raised: #282235;
+  --hover: #30263e;
+  --standalone: #191524;
+  --accent-line: #4d3b66;
+  --accent-outline: #a080cb;
+  --focus: #be9bf6;
+  --shadow: #09061025;
+  --shadow-hover: #09061050;
+  --ui-primary: var(--accent);
+  --ui-success: #83dbaf;
+  --ui-warning: #f2c77d;
+  --ui-error: #ff9ba9;
+  --ui-text-dimmed: #a099af;
+  --ui-text-muted: var(--muted);
+  --ui-text-toned: #d0c6df;
+  --ui-text: var(--ink);
+  --ui-text-highlighted: #fff;
+  --ui-text-inverted: #21162f;
+  --ui-bg: var(--paper);
+  --ui-bg-muted: var(--raised);
+  --ui-bg-elevated: var(--hover);
+  --ui-bg-accented: #40334f;
+  --ui-border: var(--line);
+  --ui-border-muted: #51435f;
+  --ui-border-accented: #6b5b7d;
+  color-scheme: dark;
 }
 * {
   box-sizing: border-box;
 }
 html {
-  color-scheme: light;
+  background: var(--soft);
+  color: var(--ink);
   scrollbar-gutter: stable;
 }
 body {
@@ -43,7 +89,7 @@ body {
     cursor: pointer;
   }
   :focus-visible {
-    outline: 3px solid #8866d4;
+    outline: 3px solid var(--focus);
     outline-offset: 3px;
   }
   h1,
@@ -133,6 +179,30 @@ body {
   --tint: #edecf1;
   --tone: #645f75;
 }
+.dark .purple {
+  --tint: #382855;
+  --tone: #ccb3ff;
+}
+.dark .sand {
+  --tint: #47351e;
+  --tone: #f4c986;
+}
+.dark .peach {
+  --tint: #492c30;
+  --tone: #ffb6a5;
+}
+.dark .mint {
+  --tint: #213d36;
+  --tone: #91e2b9;
+}
+.dark .blue {
+  --tint: #293653;
+  --tone: #abc5ff;
+}
+.dark .slate {
+  --tint: #353043;
+  --tone: #c9bfd9;
+}
 .icon-box,
 .feed-symbol {
   color: var(--tone);
@@ -143,7 +213,7 @@ body {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--paper);
-  box-shadow: 0 2px 4px #30264504;
+  box-shadow: 0 2px 4px var(--shadow);
   min-width: 0;
 }
 .panel-head {
@@ -181,7 +251,7 @@ body {
 }
 .eyebrow {
   margin-bottom: 0.4rem;
-  color: #73628f;
+  color: var(--muted);
 }
 .availability::before,
 .unread-dot {
@@ -202,7 +272,7 @@ body {
   top: -80px;
   left: 12px;
   z-index: 100;
-  background: white;
+  background: var(--paper);
   padding: 12px;
   color: var(--accent);
 }

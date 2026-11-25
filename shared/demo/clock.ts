@@ -3,7 +3,7 @@ import type { DemoState } from '../types'
 
 // A repeatable presentation clock. Each action advances one minute beyond the latest event.
 export function demoTime(state: DemoState) {
-  let latest = Date.parse(settings.sampleDate)
+  let latest = Date.parse(`${settings.sampleDate}`)
   for (const order of state.orders) {
     for (const event of order.events) latest = Math.max(latest, Date.parse(event.at))
   }
