@@ -22,8 +22,8 @@
   font-size: 0.9rem;
 }
 .order-table thead {
-  background: #f8f7fb;
-  color: #696174;
+  background: var(--raised);
+  color: var(--muted);
   font-size: 0.78rem;
 }
 .order-table th {
@@ -34,7 +34,7 @@
 }
 .order-table td {
   padding: 13px 14px;
-  border-bottom: 1px solid #eeecf2;
+  border-bottom: 1px solid var(--line);
   vertical-align: middle;
 }
 .order-table tr:last-child td {
@@ -49,7 +49,7 @@
   padding-right: 16px;
 }
 .order-table tbody tr:hover {
-  background: #fdfbff;
+  background: var(--hover);
 }
 .order-table td small,
 .amount small,
@@ -61,7 +61,7 @@
 }
 .order-table .order-id,
 .queue-row .order-id {
-  color: #67459c;
+  color: var(--accent-dark);
   font-size: 0.875rem;
   font-weight: 650;
   white-space: nowrap;
@@ -146,12 +146,12 @@
   height: 73px;
   border-radius: 18px;
   transform: rotate(-12deg) skewY(-2deg);
-  background: linear-gradient(125deg, white, var(--tint));
+  background: linear-gradient(125deg, var(--paper), var(--tint));
   box-shadow:
-    2px 4px 0 color-mix(in srgb, var(--tone), white 55%),
-    4px 9px 0 color-mix(in srgb, var(--tone), white 70%),
+    2px 4px 0 color-mix(in srgb, var(--tone), var(--paper) 55%),
+    4px 9px 0 color-mix(in srgb, var(--tone), var(--paper) 70%),
     6px 18px 18px color-mix(in srgb, var(--tone), transparent 75%);
-  border: 2px solid white;
+  border: 2px solid var(--paper);
 }
 .art-tile .glyph {
   height: 39px;
@@ -163,7 +163,7 @@
   top: 18%;
   width: 12px;
   height: 12px;
-  border: 2px solid color-mix(in srgb, var(--tone), white 30%);
+  border: 2px solid color-mix(in srgb, var(--tone), var(--paper) 30%);
   transform: rotate(22deg);
   border-radius: 3px;
 }
@@ -212,10 +212,10 @@
   align-items: center;
   gap: 4px;
   font-size: 0.76rem;
-  color: #2c7451;
+  color: var(--ui-success);
 }
 .availability.unavailable {
-  color: #9b444d;
+  color: var(--ui-error);
 }
 .card-detail {
   justify-content: space-between;
@@ -339,14 +339,14 @@
 }
 .flow-detail {
   padding: 13px 15px;
-  border: 1px solid #dcd2ed;
+  border: 1px solid var(--accent-line);
   border-radius: 10px;
-  background: #f6f2fc;
-  color: #514265;
+  background: var(--raised);
+  color: var(--ink);
   font-size: 0.9rem;
 }
 .error-text {
-  color: #943a49 !important;
+  color: var(--ui-error) !important;
 }
 .processing-line {
   display: grid;
@@ -388,7 +388,7 @@
   display: grid;
   place-items: center;
   padding: 18px;
-  background: #f1edf7;
+  background: var(--standalone);
 }
 .login-card {
   width: min(100%, 440px);
@@ -400,7 +400,11 @@
   display: grid;
   gap: 18px;
 }
-.login-card .brand {
+.login-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 8px;
 }
 .login-card .eyebrow {
@@ -413,8 +417,8 @@
   transition: border-color 0.15s;
 }
 .role-card.current {
-  border-color: #b295d3;
-  box-shadow: inset 0 0 0 1px #dfd4ed;
+  border-color: var(--accent-outline);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
 }
 .role-card-top,
 .reset-card,
@@ -436,7 +440,7 @@
 }
 .role-card > strong {
   font-size: 0.88rem;
-  color: #6b5184;
+  color: var(--accent-dark);
 }
 .role-card p,
 .policy-grid p,
@@ -470,7 +474,7 @@
   margin-left: auto;
 }
 .notice-row:hover {
-  background: #faf8fd;
+  background: var(--hover);
 }
 .notice-row p,
 .directory-row p,
@@ -569,8 +573,8 @@
   font-size: 1.2rem;
 }
 .flow-map {
-  background-color: #f9f8fc;
-  background-image: radial-gradient(#dcd6e5 0.9px, transparent 0.9px);
+  background-color: var(--raised);
+  background-image: radial-gradient(var(--line) 0.9px, transparent 0.9px);
   background-size: 13px 13px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -602,7 +606,7 @@
   content: '';
   height: 2px;
   width: 24px;
-  background: #bdaacf;
+  background: var(--accent-outline);
   top: 50%;
   left: 100%;
 }
@@ -621,15 +625,15 @@
   display: block;
   width: 100%;
   height: 100%;
-  border: 1px solid #ddd7e7;
-  background: white;
+  border: 1px solid var(--line);
+  background: var(--paper);
   border-radius: 10px;
   padding: 11px 13px;
   text-align: left;
 }
 .flow-node.active {
-  border-color: #8e6ab6;
-  box-shadow: 0 0 0 2px #d7c6e7;
+  border-color: var(--focus);
+  box-shadow: 0 0 0 2px var(--accent-line);
 }
 .flow-node strong,
 .flow-node small {
@@ -656,7 +660,7 @@
 }
 .step-no {
   font-size: 0.67rem;
-  color: #776881;
+  color: var(--muted);
 }
 .flow-detail {
   margin-top: 15px;

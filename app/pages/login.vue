@@ -13,7 +13,10 @@ const state = reactive<{ role: Role }>({ role: 'employee' })
 <template>
   <main class="standalone">
     <section class="panel login-card">
-      <BrandMark />
+      <div class="login-heading">
+        <BrandMark />
+        <UColorModeButton />
+      </div>
       <p class="eyebrow">Financial Management System</p>
       <h1>Open a workspace</h1>
       <p class="muted">Choose a sample role to enter the presentation.</p>

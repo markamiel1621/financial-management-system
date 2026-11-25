@@ -9,7 +9,7 @@
   display: flex;
   flex-direction: column;
   padding: 0 16px 16px;
-  background: #fff;
+  background: var(--paper);
   border-right: 1px solid var(--line);
   overflow-y: auto;
 }
@@ -32,11 +32,11 @@
   font-weight: 730;
   letter-spacing: -0.075em;
   line-height: 1;
-  color: #242034;
+  color: var(--ink);
 }
 .brand-name::after {
   content: '.';
-  color: #865bc8;
+  color: var(--accent);
 }
 .brand-icon {
   width: 29px;
@@ -85,8 +85,8 @@
   flex: none;
   border: 1px solid var(--line);
   border-radius: 8px;
-  color: #67567b;
-  background: #f8f6fc;
+  color: var(--muted);
+  background: var(--raised);
 }
 .portal-id strong,
 .portal-id small,
@@ -107,11 +107,11 @@
   font-size: 0.76rem;
 }
 .switch-link:hover {
-  background: #f5f2fa;
+  background: var(--hover);
 }
 .switch-link.selected {
-  color: #633aa6;
-  background: #eee7fa;
+  color: var(--accent-dark);
+  background: var(--accent-pale);
 }
 .side-bottom {
   margin-top: auto;
@@ -138,7 +138,7 @@
 }
 .topbar {
   min-height: 69px;
-  background: #fff;
+  background: var(--paper);
   border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
@@ -153,7 +153,7 @@
 }
 .bread {
   gap: 13px;
-  color: #777181;
+  color: var(--muted);
   font-size: 0.86rem;
 }
 .bread > .glyph {
@@ -161,11 +161,11 @@
   height: 16px;
 }
 .bread strong {
-  color: #393442;
+  color: var(--ink);
   font-weight: 600;
 }
 .bread-slash {
-  color: #b1aabb;
+  color: var(--muted);
 }
 .header-tools {
   gap: 12px;
@@ -285,8 +285,8 @@
 .stat-card:hover,
 .catalog-card:hover,
 .role-card:hover {
-  border-color: #baa6d6;
-  box-shadow: 0 4px 14px #3c275111;
+  border-color: var(--accent-outline);
+  box-shadow: 0 4px 14px var(--shadow-hover);
 }
 .stat-body {
   display: grid;
@@ -316,7 +316,7 @@
   overflow: hidden;
 }
 .heading-icon {
-  color: #9383a1;
+  color: var(--muted);
 }
 .feed-list {
   padding: 2px 21px 8px;
@@ -332,7 +332,7 @@
   position: absolute;
   left: 16px;
   width: 1px;
-  background: #e5dfec;
+  background: var(--line);
   top: 45px;
   bottom: -6px;
 }
@@ -355,7 +355,7 @@
   font-weight: 620;
 }
 .feed-event div > span {
-  color: #665379;
+  color: var(--muted);
   font-size: 0.8rem;
 }
 .feed-event small {

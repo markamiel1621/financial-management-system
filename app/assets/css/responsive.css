@@ -140,7 +140,8 @@
   }
   .user-info,
   .bread-root,
-  .bread-slash {
+  .bread-slash,
+  .cart-label {
     display: none;
   }
   .user-link {

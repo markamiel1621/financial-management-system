@@ -6,9 +6,9 @@ export const settings = {
   currency: 'PHP',
   locale: 'en-PH',
   timezone: 'Asia/Manila',
-  policy: 'DEMO-1',
+  policy: 'FMS-1',
   storageKey: 'folio.fms.demo.v1',
-  sampleDate: '2026-11-24T02:00:00Z',
+  sampleDate: new Date(),
   office: 'Administrative Services',
 }
 

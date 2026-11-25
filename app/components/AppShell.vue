@@ -77,7 +77,7 @@ useHead({ title: () => section.value + ' · ' + appName })
               icon="i-lucide-shopping-cart"
               :aria-label="'Cart, ' + cartCount + ' units'"
             >
-              Cart
+              <span class="cart-label">Cart</span>
               <UBadge variant="soft" size="sm">{{ cartCount }}</UBadge>
             </UButton>
             <UChip :show="unread > 0" inset size="sm">
@@ -90,6 +90,7 @@ useHead({ title: () => section.value + ' · ' + appName })
               />
             </UChip>
           </template>
+          <UColorModeButton />
           <span class="toolbar-divider" />
           <NuxtLink to="/profile" class="user-link" :aria-label="person.name + ', profile'">
             <UAvatar :text="person.initials" color="primary" />
