@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import type { Funding, Offering } from './types'
 
 export const purposeSchema = z
   .string()
@@ -76,22 +75,68 @@ const capacitySchema = z
   .min(0, 'Capacity cannot be negative.')
   .max(1_000_000, 'Capacity cannot exceed 1,000,000.')
 
-export function catalogEditSchema(funding: Funding) {
-  const price = z.number().int().nonnegative().max(100_000_000, 'Price cannot exceed 1,000,000.')
-  return z.object({
-    price:
-      funding === 'free'
-        ? price.max(0, 'A no-charge offering must keep a zero price.')
-        : price.positive('Chargeable offerings require a positive price.'),
-    stock: capacitySchema.nullable(),
-    active: z.boolean(),
-  })
-}
+const requiredText = (label: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, 'Enter ' + label + '.')
 
-export function catalogFormSchema(item: Offering) {
-  const edit = catalogEditSchema(item.funding)
-  return edit.extend({
-    price: currencyToCentavos.pipe(edit.shape.price),
-    stock: item.stock === null ? z.null() : capacitySchema,
+const offeringFields = z.object({
+  title: requiredText('the item name'),
+  sku: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z0-9]+(?:-[A-Z0-9]+)*$/, 'Use letters, numbers and single hyphens.'),
+  type: z.enum(['Product', 'Service']),
+  category: requiredText('a category'),
+  description: requiredText('a description'),
+  owner: requiredText('the responsible office'),
+  requirement: z.string().trim(),
+  delivery: requiredText('fulfillment instructions'),
+  unit: requiredText('a unit'),
+  options: z
+    .array(requiredText('an option'))
+    .min(1, 'Enter at least one option.')
+    .refine((values) => new Set(values).size === values.length, 'Each option must be unique.'),
+  funding: z.enum(['employee', 'internal', 'free'], { error: 'Choose a payment mode.' }),
+  price: z.number().int().nonnegative().max(100_000_000, 'Price cannot exceed 1,000,000.'),
+  stock: capacitySchema.nullable(),
+  limit: unitsSchema(1_000_000, 'Enter a whole order limit from 1 to 1,000,000.'),
+  review: z.boolean(),
+  eligible: z.boolean(),
+  active: z.boolean(),
+})
+
+export const offeringSchema = offeringFields.superRefine((item, ctx) => {
+  if (item.funding === 'free' && item.price !== 0)
+    ctx.addIssue({
+      code: 'custom',
+      path: ['price'],
+      message: 'A no-charge item must have a zero price.',
+    })
+  if (item.funding !== 'free' && item.price === 0)
+    ctx.addIssue({
+      code: 'custom',
+      path: ['price'],
+      message: 'Enter a positive price for a chargeable item.',
+    })
+  if (item.type === 'Product' && item.stock === null)
+    ctx.addIssue({
+      code: 'custom',
+      path: ['stock'],
+      message: 'Enter the available quantity for this product.',
+    })
+})
+
+export const catalogFormSchema = offeringFields
+  .extend({
+    price: currencyToCentavos,
+    options: z.string().transform((text) =>
+      text
+        .split(/\r?\n/)
+        .map((option) => option.trim())
+        .filter(Boolean),
+    ),
   })
-}
+  .pipe(offeringSchema)
