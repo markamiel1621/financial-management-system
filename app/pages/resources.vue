@@ -86,12 +86,12 @@ const nodes = computed(() => [
             'The order has no charge. It proceeds directly to fulfillment with a payment state of Not required.',
         },
   {
-    title: 'Fulfill each line',
+    title: 'Record handover',
     actor: 'Fulfillment Staff',
     icon: 'package-check',
     color: 'purple',
     detail:
-      'Start the work, mark an item ready, then record quantity and handover evidence. Partially issued lines stay open until every unit is delivered.',
+      'When you hand over the order, add any remarks and select Record handover to complete the whole order.',
   },
   {
     title: 'Complete the order',

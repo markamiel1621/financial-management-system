@@ -2,19 +2,14 @@ import { personas } from '../config'
 import {
   approvedForWork,
   canCancel,
-  financeCleared,
   inScope,
   isTerminal,
   orderTotal,
+  readyForHandover,
   verifiedTotal,
 } from '../orders'
 import type { DemoState, Order, Role } from '../types'
-import {
-  handoverQuantitySchema,
-  paymentAmountSchema,
-  purposeSchema,
-  remarkSchema,
-} from '../validation'
+import { handoverFormSchema, paymentAmountSchema, purposeSchema, remarkSchema } from '../validation'
 function assigned(state: DemoState, order: Order, allowed: Role[]) {
   const role = state.role
   if (!role || !allowed.includes(role) || !inScope(order, role))
@@ -148,50 +143,24 @@ export function verifyAllocation(state: DemoState, order: Order, reference: stri
     now,
   )
 }
-export function fulfillLine(
+export function recordHandover(
   state: DemoState,
   order: Order,
-  index: number,
-  action: 'start' | 'ready' | 'handover',
-  evidence: string,
-  quantity: number,
+  remarks: string,
   now: string,
 ) {
   assigned(state, order, ['fulfillment'])
-  if (!approvedForWork(order) || !financeCleared(order))
-    throw new Error('Approval and financial clearance are required before fulfillment.')
-  const line = order.lines[index]
-  if (!line || line.status === 'Fulfilled') throw new Error('Choose an open line.')
-  const note = remarkSchema.parse(evidence)
-  if (action === 'start' && line.status === 'Not started') line.status = 'In progress'
-  else if (action === 'ready' && line.status === 'In progress') line.status = 'Ready'
-  else if (action === 'handover' && line.status === 'Ready') {
-    handoverQuantitySchema(line.quantity - line.fulfilled).parse(quantity)
-    line.fulfilled += quantity
-    if (line.fulfilled === line.quantity) line.status = 'Fulfilled'
-  } else throw new Error('This milestone is unavailable for the selected line.')
-  order.status = order.lines.every((line) => line.status === 'Fulfilled')
-    ? 'Completed'
-    : 'In progress'
-  const title =
-    action === 'handover'
-      ? 'Handover recorded'
-      : action === 'ready'
-        ? 'Ready for handover'
-        : 'Fulfillment started'
-  record(
-    state,
-    order,
-    title,
-    line.title + ' · ' + (action === 'handover' ? quantity + ' ' + line.unit + ' · ' : '') + note,
-    now,
-  )
-  if (order.status === 'Completed')
-    record(
-      state,
-      order,
-      'Order completed',
-      'All lines fulfilled and finance conditions satisfied.',
-      now,
-    )
+  if (!readyForHandover(order))
+    throw new Error('Approval and financial clearance are required before handover.')
+  const note = handoverFormSchema.parse({ remarks }).remarks
+  const handedOver: string[] = []
+  for (const line of order.lines) {
+    if (line.status === 'Fulfilled') continue
+    handedOver.push(`${line.title} (${line.option}) · ${line.quantity - line.fulfilled} ${line.unit}`)
+    line.fulfilled = line.quantity
+    line.status = 'Fulfilled'
+  }
+  order.status = 'Completed'
+  record(state, order, 'Handover recorded', [note, ...handedOver].filter(Boolean).join('\n'), now)
+  record(state, order, 'Order completed', 'All items have been handed over.', now)
 }

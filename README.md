@@ -27,6 +27,8 @@ bun run dev
 
 ## Present an order
 
+See the [order fulfillment guide](docs/order-fulfillment.md) for the user diagram, process flowchart, ERD and column dictionary.
+
 | Item | Sample rate | Presentation path |
 | --- | --- | --- |
 | Office Supplies | ₱100.00 per kit | Employee checkout → supervisor approval → finance verifies the office allocation → fulfillment records issuance |
@@ -36,7 +38,7 @@ bun run dev
 | Equipment Consultation | No employee charge | Automatic acceptance → service fulfillment |
 | Archive Retrieval | No employee charge | Unavailable example with zero capacity |
 
-For a short walkthrough, place an **Office Supplies** order and note its order number. Switch to **Supervisor** to start and approve the review. In **Finance / Cashier**, verify an allocation with a sample reference. In **Fulfillment Staff**, start the line, mark it ready, and record the units handed over. Switch back to **Employee** and open **My orders** to see the completed order and its timeline.
+For a short walkthrough, place an **Office Supplies** order and note its order number. Switch to **Supervisor** to start and approve the review. In **Finance / Cashier**, verify an allocation with a sample reference. In **Fulfillment Staff**, open the order, add any handover remarks, and select **Record handover** to complete it. Switch back to **Employee** and open **My orders** to see the completed order and its timeline.
 
 ```mermaid
 flowchart TD
@@ -50,10 +52,10 @@ flowchart TD
   C -->|No| G
   G -->|Employee payment| H["Verify collection"]
   G -->|Internal allocation| I["Verify allocation"]
-  G -->|No charge| J["Fulfill order lines"]
+  G -->|No charge| J["Record handover"]
   H --> J
   I --> J
-  J -->|All units delivered| K["Completed"]
+  J --> K["Completed"]
 ```
 
 ## Configure the prototype

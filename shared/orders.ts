@@ -46,6 +46,9 @@ export function financeCleared(order: Order) {
 }
 export const approvedForWork = (order: Order) =>
   order.status === 'Approved' || order.status === 'In progress'
+export function readyForHandover(order: Order) {
+  return approvedForWork(order) && financeCleared(order)
+}
 export function needsAction(order: Order) {
   return (
     order.status === 'Returned' ||
@@ -71,9 +74,7 @@ export function nextAction(order: Order) {
       ? 'Finance will check your payment reference.'
       : 'Pay at the cashier and submit your payment reference.'
   }
-  return order.lines.some((line) => line.status === 'Ready')
-    ? 'An item is ready for handover.'
-    : 'Fulfillment staff can now prepare your items.'
+  return 'Fulfillment staff can now record the handover.'
 }
 export function inScope(order: Order, role: Role | null) {
   if (!role || role === 'catalog') return false

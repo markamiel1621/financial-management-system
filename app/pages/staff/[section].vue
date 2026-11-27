@@ -13,6 +13,7 @@ import {
   orderTotal,
   timeLabel,
   paymentStatus,
+  readyForHandover,
 } from '#shared/orders'
 import { roleDetails } from '#shared/roles'
 import type { Order } from '#shared/types'
@@ -24,7 +25,7 @@ const title = computed(() => staffLinks.find((link) => link.to === route.path)?.
 const descriptions: Record<string, string> = {
   review: 'Review requests assigned to your office.',
   payments: 'Verify offline collections and office allocations.',
-  fulfillment: 'Track assigned order lines and record handover evidence.',
+  fulfillment: 'Record the handover when you deliver an order.',
   catalog: 'Maintain sample offerings and future checkout prices.',
   reports: 'Review financial and fulfillment figures for your assigned office.',
   audit: 'Inspect the chronological record of order and catalog changes.',
@@ -36,7 +37,6 @@ watch(section, () => {
   search.value = ''
   readyOnly.value = false
 })
-const workReady = (order: Order) => approvedForWork(order) && financeCleared(order)
 const queue = computed(() =>
   visibleOrders.value.filter((order) => {
     if (
@@ -48,7 +48,7 @@ const queue = computed(() =>
     if (section.value === 'review') return awaitingReview(order)
     if (section.value === 'payments')
       return approvedForWork(order) && order.funding !== 'free' && !financeCleared(order)
-    return approvedForWork(order) && (!readyOnly.value || workReady(order))
+    return approvedForWork(order) && (!readyOnly.value || readyForHandover(order))
   }),
 )
 const audit = computed(() =>
@@ -66,7 +66,7 @@ function actionLabel(order: Order) {
     return order.status === 'Submitted' ? 'Start review' : 'Review request'
   if (section.value === 'payments')
     return order.funding === 'internal' ? 'Review allocation' : 'Review collection'
-  return workReady(order) ? 'Open fulfillment' : 'View finance hold'
+  return readyForHandover(order) ? 'Open handover' : 'View finance hold'
 }
 const latest = computed(() => demoTime(model.value))
 function age(created: string) {
@@ -130,7 +130,7 @@ function age(created: string) {
         <UCheckbox
           v-if="section === 'fulfillment'"
           v-model="readyOnly"
-          label="Ready to work only"
+          label="Ready for handover only"
         />
         <UBadge color="neutral" variant="subtle">{{ queue.length }} orders</UBadge>
       </div>

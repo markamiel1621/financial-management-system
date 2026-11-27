@@ -2,10 +2,16 @@
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { z } from 'zod'
 import { settings } from '#shared/config'
-import { approvedForWork, canCancel, financeCleared, isTerminal, orderTotal } from '#shared/orders'
+import {
+  approvedForWork,
+  canCancel,
+  isTerminal,
+  orderTotal,
+  readyForHandover,
+} from '#shared/orders'
 import {
   cancelOrder,
-  fulfillLine,
+  recordHandover,
   recordPayment,
   resubmitOrder,
   reviewOrder,
@@ -14,7 +20,7 @@ import {
 } from '#shared/demo/workflow'
 import type { Order } from '#shared/types'
 import {
-  fulfillmentFormSchema,
+  handoverFormSchema,
   paymentFormSchema,
   purposeFormSchema,
   reasonFormSchema,
@@ -30,8 +36,7 @@ const payment = reactive<{ reference: string; amount?: number }>({ reference: ''
 const allocation = reactive({ reference: '' })
 const cancellation = ref(false)
 const cancellationState = reactive({ reason: '' })
-const lineIndex = ref(0)
-const work = reactive<{ evidence: string; quantity?: number }>({ evidence: '', quantity: 1 })
+const handover = reactive({ remarks: '' })
 const error = ref('')
 const balance = computed(
   () =>
@@ -45,33 +50,6 @@ watch(
   { immediate: true },
 )
 const paymentSchema = computed(() => paymentFormSchema(balance.value))
-const lineChoices = computed(() =>
-  props.order.lines.map((line, index) => ({
-    value: index,
-    label: [line.title, line.option, line.status].join(' · '),
-  })),
-)
-const selectedLine = computed(() => props.order.lines[lineIndex.value])
-const milestone = computed(() => {
-  if (selectedLine.value?.status === 'Not started') return 'start'
-  if (selectedLine.value?.status === 'In progress') return 'ready'
-  return 'handover'
-})
-const remaining = computed(() =>
-  selectedLine.value ? selectedLine.value.quantity - selectedLine.value.fulfilled : 0,
-)
-const workSchema = computed(() =>
-  fulfillmentFormSchema(milestone.value === 'handover' ? remaining.value : undefined),
-)
-watch(lineIndex, () => {
-  work.evidence = ''
-  work.quantity = 1
-})
-const milestoneLabel = {
-  start: 'Start fulfillment',
-  ready: 'Mark ready for handover',
-  handover: 'Record handover',
-}
 const paymentOpen = computed(
   () =>
     (role.value === 'finance' || role.value === 'employee') &&
@@ -86,7 +64,7 @@ const allocationOpen = computed(
     !props.order.allocation,
 )
 const fulfillmentOpen = computed(
-  () => role.value === 'fulfillment' && approvedForWork(props.order) && financeCleared(props.order),
+  () => role.value === 'fulfillment' && readyForHandover(props.order),
 )
 const reviewOpen = computed(
   () => role.value === 'supervisor' && ['Submitted', 'Under review'].includes(props.order.status),
@@ -124,25 +102,8 @@ function submitPayment({ data }: FormSubmitEvent<z.output<ReturnType<typeof paym
 function authorizeAllocation({ data }: FormSubmitEvent<z.output<typeof referenceFormSchema>>) {
   act((state, order, now) => verifyAllocation(state, order, data.reference, now))
 }
-function recordMilestone({
-  data,
-}: FormSubmitEvent<z.output<ReturnType<typeof fulfillmentFormSchema>>>) {
-  if (
-    act((state, order, now) =>
-      fulfillLine(
-        state,
-        order,
-        lineIndex.value,
-        milestone.value,
-        data.evidence,
-        data.quantity ?? 0,
-        now,
-      ),
-    )
-  ) {
-    work.evidence = ''
-    work.quantity = 1
-  }
+function submitHandover({ data }: FormSubmitEvent<z.output<typeof handoverFormSchema>>) {
+  act((state, order, now) => recordHandover(state, order, data.remarks, now))
 }
 function confirmCancellation({ data }: FormSubmitEvent<z.output<typeof reasonFormSchema>>) {
   act((state, order, now) => cancelOrder(state, order, data.reason, now))
@@ -254,32 +215,18 @@ function confirmCancellation({ data }: FormSubmitEvent<z.output<typeof reasonFor
       </UFormField>
       <UButton type="submit" block>Verify allocation</UButton>
     </UForm>
-    <template v-if="fulfillmentOpen">
-      <UFormField label="Order line">
-        <USelect class="w-full" v-model="lineIndex" :items="lineChoices" />
+    <UForm
+      v-if="fulfillmentOpen"
+      :schema="handoverFormSchema"
+      :state="handover"
+      v-bind="formValidation"
+      @submit="submitHandover"
+    >
+      <UFormField name="remarks" label="Handover remarks (optional)">
+        <UTextarea v-model="handover.remarks" :rows="2" :maxlength="500" />
       </UFormField>
-      <UForm
-        v-if="selectedLine && selectedLine.status !== 'Fulfilled'"
-        :key="lineIndex + milestone"
-        :schema="workSchema"
-        :state="work"
-        v-bind="formValidation"
-        @submit="recordMilestone"
-      >
-        <UFormField name="evidence" label="Work, recipient or handover evidence" required>
-          <UTextarea v-model="work.evidence" :rows="2" :maxlength="500" />
-        </UFormField>
-        <UFormField
-          v-if="milestone === 'handover'"
-          name="quantity"
-          label="Units handed over"
-          required
-        >
-          <UInput v-model.number="work.quantity" type="number" min="1" step="1" :max="remaining" />
-        </UFormField>
-        <UButton type="submit" block>{{ milestoneLabel[milestone] }}</UButton>
-      </UForm>
-    </template>
+      <UButton type="submit" block>Record handover</UButton>
+    </UForm>
     <div v-if="role === 'employee' && canCancel(order)" class="cancel-section">
       <UButton v-if="!cancellation" color="neutral" variant="link" @click="cancellation = true">
         Cancel this order

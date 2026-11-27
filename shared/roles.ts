@@ -18,7 +18,7 @@ export const roleDetails: Record<Role, { icon: string; color: string; descriptio
   fulfillment: {
     icon: 'package-check',
     color: 'blue',
-    description: 'Prepare assigned items and record line-by-line handovers.',
+    description: 'Record handovers for orders in your office.',
   },
   catalog: {
     icon: 'store',

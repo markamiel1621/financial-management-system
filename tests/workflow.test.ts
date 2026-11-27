@@ -4,7 +4,7 @@ import { acceptPrice, cartIssue, changeCart, placeOrder } from '../shared/demo/c
 import { createOffering, editOffering, nextItemCode } from '../shared/demo/catalog-admin'
 import {
   cancelOrder,
-  fulfillLine,
+  recordHandover,
   recordPayment,
   resubmitOrder,
   reviewOrder,
@@ -86,17 +86,15 @@ describe('review, finance and fulfillment', () => {
     expect(paymentStatus(order)).toBe('Partially paid')
     expect(() => verifyPayment(state, order, 'RECEIPT-ONE', at)).toThrow()
     state.role = 'fulfillment'
-    expect(() => fulfillLine(state, order, 0, 'start', 'Print job', 0, at)).toThrow()
+    expect(() => recordHandover(state, order, '', at)).toThrow('financial clearance')
     state.role = 'finance'
     recordPayment(state, order, 'receipt-two', 1200, at)
     verifyPayment(state, order, 'RECEIPT-TWO', at)
     expect(financeCleared(order)).toBe(true)
     state.role = 'fulfillment'
-    fulfillLine(state, order, 0, 'start', 'Print job started', 0, at)
-    fulfillLine(state, order, 0, 'ready', 'Copies prepared', 0, at)
-    fulfillLine(state, order, 0, 'handover', 'Alex collected five pages', 5, at)
-    expect(fulfillmentStatus(order)).toBe('Partially fulfilled')
-    fulfillLine(state, order, 0, 'handover', 'Alex collected the remaining pages', 5, at)
+    recordHandover(state, order, '', at)
+    expect(order.lines[0]?.fulfilled).toBe(10)
+    expect(fulfillmentStatus(order)).toBe('Fulfilled')
     expect(order.status).toBe('Completed')
   })
   test('returned order keeps its number, needs fresh review and a separate allocation', () => {
@@ -138,7 +136,7 @@ describe('review, finance and fulfillment', () => {
   })
 })
 
-test('a compatible two-line order completes only after both items are handed over', () => {
+test('one handover saves remarks and completes new and previously partially issued lines', () => {
   const state = createDemo()
   changeCart(state, 'printing-copying', 'A4', 5, true)
   changeCart(state, 'document-processing', 'Office copy', 1, true)
@@ -148,13 +146,21 @@ test('a compatible two-line order completes only after both items are handed ove
   state.role = 'finance'
   recordPayment(state, order, 'TWO-LINES', 6000, at)
   verifyPayment(state, order, 'TWO-LINES', at)
+  order.status = 'In progress'
+  order.lines[0]!.status = 'Ready'
+  order.lines[0]!.fulfilled = 2 // Saved under the previous partial handover workflow.
+  state.role = 'employee'
+  expect(() => recordHandover(state, order, '', at)).toThrow('assigned workspace')
   state.role = 'fulfillment'
-  for (const [index, line] of order.lines.entries()) {
-    fulfillLine(state, order, index, 'start', 'Processing started', 0, at)
-    fulfillLine(state, order, index, 'ready', 'Ready for collection', 0, at)
-    fulfillLine(state, order, index, 'handover', 'Alex collected the output', line.quantity, at)
-    expect(order.status).toBe(index === 0 ? 'In progress' : 'Completed')
-  }
+  recordHandover(state, order, 'Collected at the records desk.', at)
+  expect(order.lines.map((line) => line.fulfilled)).toEqual([5, 1])
+  expect(fulfillmentStatus(order)).toBe('Fulfilled')
+  expect(order.status).toBe('Completed')
+  expect(() => recordHandover(state, order, '', at)).toThrow('closed')
+  const handovers = order.events.filter((event) => event.title === 'Handover recorded')
+  expect(handovers).toHaveLength(1)
+  expect(handovers[0]?.note).toContain('Collected at the records desk.')
+  expect(handovers[0]?.note).toContain('3 ' + order.lines[0]!.unit)
   expect(order.events.filter((event) => event.title === 'Order completed')).toHaveLength(1)
 })
 

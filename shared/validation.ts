@@ -58,16 +58,9 @@ export function cartSelectionSchema(options: string[], max: number) {
   })
 }
 
-export function handoverQuantitySchema(remaining: number) {
-  return unitsSchema(remaining, 'Enter a whole quantity within the remaining units.')
-}
-
-export function fulfillmentFormSchema(remaining?: number) {
-  return z.object({
-    evidence: remarkSchema,
-    quantity: remaining === undefined ? z.number().optional() : handoverQuantitySchema(remaining),
-  })
-}
+export const handoverFormSchema = z.object({
+  remarks: z.string().trim().max(500, 'Use at most 500 characters.').default(''),
+})
 
 const capacitySchema = z
   .number({ error: 'Enter the remaining capacity.' })

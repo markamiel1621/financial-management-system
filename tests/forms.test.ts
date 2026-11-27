@@ -5,7 +5,7 @@ import {
   cartSelectionSchema,
   catalogFormSchema,
   checkoutSchema,
-  fulfillmentFormSchema,
+  handoverFormSchema,
   paymentFormSchema,
   purposeFormSchema,
   reviewFormSchema,
@@ -78,10 +78,7 @@ test('review and fulfillment validate only the fields required by the selected a
       'Missing office',
     )
   }
-  expect(fulfillmentFormSchema().safeParse({ evidence: 'Started work' }).success).toBe(true)
-  const handover = fulfillmentFormSchema(2)
-  for (const quantity of [undefined, 0, 1.5, 3]) {
-    expect(handover.safeParse({ evidence: 'Collection documented', quantity }).success).toBe(false)
-  }
-  expect(handover.parse({ evidence: 'Collected', quantity: 2 }).quantity).toBe(2)
+  expect(handoverFormSchema.parse({ remarks: '  Delivered  ' }).remarks).toBe('Delivered')
+  expect(handoverFormSchema.parse({ remarks: ' ' }).remarks).toBe('')
+  expect(handoverFormSchema.safeParse({ remarks: 'x'.repeat(501) }).success).toBe(false)
 })
